@@ -1,8 +1,13 @@
 package database
 
 import (
+	"fmt"
 	"log"
+	"path/filepath"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -22,131 +27,50 @@ func Initialize(databaseURL string) (*sqlx.DB, error) {
 }
 
 func RunMigrations(db *sqlx.DB) error {
-	migrations := []string{
-		createUsersTable,
-		createBusinessesTable,
-		createWebsitesTable,
-		createPlansTable,
-		createSubscriptionsTable,
-		createDomainsTable,
-		createInvoicesTable,
-		createPaymentsTable,
+	// Get the underlying *sql.DB from *sqlx.DB
+	sqlDB := db.DB
+
+	// Create postgres driver instance
+	driver, err := postgres.WithInstance(sqlDB, &postgres.Config{})
+	if err != nil {
+		return fmt.Errorf("failed to create postgres driver: %w", err)
 	}
 
-	for _, migration := range migrations {
-		if _, err := db.Exec(migration); err != nil {
-			return err
+	// Get absolute path to migrations directory
+	// This ensures migrations work regardless of where the binary is run from
+	migrationsPath, err := filepath.Abs("migrations")
+	if err != nil {
+		return fmt.Errorf("failed to get migrations path: %w", err)
+	}
+
+	// Convert to file:// URL format (file:///absolute/path on Unix)
+	migrationURL := fmt.Sprintf("file://%s", migrationsPath)
+
+	log.Printf("Running migrations from: %s", migrationURL)
+
+	// Create migrate instance with file source
+	m, err := migrate.NewWithDatabaseInstance(
+		migrationURL,
+		"postgres",
+		driver,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create migrate instance: %w", err)
+	}
+
+	// Run migrations up to the latest version
+	if err := m.Up(); err != nil {
+		// If we're already at the latest version, that's fine
+		if err == migrate.ErrNoChange {
+			log.Println("Database is already at the latest migration version")
+			return nil
 		}
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	log.Println("Migrations completed successfully")
 	return nil
 }
 
-const createUsersTable = `
-CREATE TABLE IF NOT EXISTS users (
-	id SERIAL PRIMARY KEY,
-	name VARCHAR(255) NOT NULL,
-	email VARCHAR(255) UNIQUE NOT NULL,
-	password VARCHAR(255) NOT NULL,
-	role VARCHAR(50) DEFAULT 'owner',
-	email_verified_at TIMESTAMP,
-	remember_token VARCHAR(255),
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
-
-const createBusinessesTable = `
-CREATE TABLE IF NOT EXISTS businesses (
-	id SERIAL PRIMARY KEY,
-	user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	name VARCHAR(255) NOT NULL,
-	slug VARCHAR(255) UNIQUE NOT NULL,
-	description TEXT,
-	logo VARCHAR(255),
-	industry VARCHAR(255),
-	phone VARCHAR(50),
-	address VARCHAR(255),
-	status VARCHAR(50) DEFAULT 'pending',
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
-
-const createWebsitesTable = `
-CREATE TABLE IF NOT EXISTS websites (
-	id SERIAL PRIMARY KEY,
-	business_id INTEGER REFERENCES businesses(id) ON DELETE CASCADE,
-	title VARCHAR(255) NOT NULL,
-	theme_name VARCHAR(255) DEFAULT 'default',
-	content JSONB,
-	is_demo BOOLEAN DEFAULT true,
-	is_claimed BOOLEAN DEFAULT false,
-	status VARCHAR(50) DEFAULT 'pending',
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
-
-const createPlansTable = `
-CREATE TABLE IF NOT EXISTS plans (
-	id SERIAL PRIMARY KEY,
-	name VARCHAR(255) NOT NULL,
-	description TEXT,
-	price DECIMAL(10, 2) NOT NULL,
-	billing_cycle VARCHAR(50) DEFAULT 'monthly',
-	features JSONB,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
-
-const createSubscriptionsTable = `
-CREATE TABLE IF NOT EXISTS subscriptions (
-	id SERIAL PRIMARY KEY,
-	business_id INTEGER REFERENCES businesses(id) ON DELETE CASCADE,
-	plan_id INTEGER REFERENCES plans(id) ON DELETE CASCADE,
-	status VARCHAR(50) DEFAULT 'active',
-	ends_at TIMESTAMP,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
-
-const createDomainsTable = `
-CREATE TABLE IF NOT EXISTS domains (
-	id SERIAL PRIMARY KEY,
-	business_id INTEGER REFERENCES businesses(id) ON DELETE CASCADE,
-	domain_name VARCHAR(255) UNIQUE NOT NULL,
-	is_custom BOOLEAN DEFAULT false,
-	status VARCHAR(50) DEFAULT 'pending',
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
-
-const createInvoicesTable = `
-CREATE TABLE IF NOT EXISTS invoices (
-	id SERIAL PRIMARY KEY,
-	business_id INTEGER REFERENCES businesses(id) ON DELETE CASCADE,
-	amount DECIMAL(10, 2) NOT NULL,
-	status VARCHAR(50) DEFAULT 'unpaid',
-	due_at TIMESTAMP,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
-
-const createPaymentsTable = `
-CREATE TABLE IF NOT EXISTS payments (
-	id SERIAL PRIMARY KEY,
-	invoice_id INTEGER REFERENCES invoices(id) ON DELETE CASCADE,
-	amount DECIMAL(10, 2) NOT NULL,
-	payment_method VARCHAR(255),
-	transaction_id VARCHAR(255),
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`
-
+// Legacy migration constants removed - now using golang-migrate
+// Migration files are in the migrations/ directory

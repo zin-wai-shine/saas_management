@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS websites (
+	id SERIAL PRIMARY KEY,
+	business_id INTEGER REFERENCES businesses(id) ON DELETE CASCADE,
+	title VARCHAR(255) NOT NULL,
+	url VARCHAR(500),
+	theme_name VARCHAR(255) DEFAULT 'default',
+	is_demo BOOLEAN DEFAULT true,
+	is_claimed BOOLEAN DEFAULT false,
+	status VARCHAR(50) DEFAULT 'pending',
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
