@@ -199,7 +199,7 @@ export const SubscriptionsPage = () => {
         <div>
           <h1 className="text-xl font-semibold text-white">Subscriptions</h1>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-glass to-teal-light text-white rounded-xl hover:shadow-medium transition-all duration-300 transform hover:scale-105 shadow-soft">
+        <button className="flex items-center gap-2 px-4 py-2 bg-teal-glass text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium">
           <Plus className="w-4 h-4" />
           Add Subscription
         </button>
@@ -302,14 +302,14 @@ export const SubscriptionsPage = () => {
                 <button
                   onClick={() => table.setPageIndex(0)}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-xl border border-slate-200/60 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/80 dark:hover:bg-gray-700 hover:shadow-soft transition-all"
+                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronsLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-xl border border-slate-200/60 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/80 dark:hover:bg-gray-700 hover:shadow-soft transition-all"
+                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -319,14 +319,14 @@ export const SubscriptionsPage = () => {
                 <button
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-xl border border-slate-200/60 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/80 dark:hover:bg-gray-700 hover:shadow-soft transition-all"
+                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                   disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-xl border border-slate-200/60 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/80 dark:hover:bg-gray-700 hover:shadow-soft transition-all"
+                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronsRight className="w-4 h-4" />
                 </button>
