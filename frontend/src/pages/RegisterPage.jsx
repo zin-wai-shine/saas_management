@@ -27,7 +27,7 @@ export const RegisterPage = () => {
     <div className="min-h-screen bg-forest-dark text-cyan-glow">
       <Navbar />
       <div className="flex items-center justify-center px-4 py-20">
-        <div className="bg-white/10 backdrop-blur-sm p-8 rounded-lg max-w-md w-full">
+        <div className="bg-white/10 backdrop-blur-sm p-8 rounded max-w-md w-full">
           <h2 className="text-3xl font-bold mb-6 text-teal-light text-center">Register</h2>
           {error && <div className="bg-red-500/20 text-red-200 p-3 rounded mb-4">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">

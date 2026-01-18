@@ -53,7 +53,7 @@ export const SearchPage = () => {
               {filteredBusinesses.map((business) => (
                 <div
                   key={business.id}
-                  className="bg-white/10 backdrop-blur-sm p-6 rounded-lg hover:bg-white/20 transition"
+                  className="bg-white/10 backdrop-blur-sm p-6 rounded hover:bg-white/20 transition"
                 >
                   <h3 className="text-xl font-bold text-teal-light mb-2">{business.name}</h3>
                   <p className="text-teal-mist mb-2">{business.industry}</p>

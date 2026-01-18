@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { planAPI } from '../../api/api';
 import { Modal } from '../../components/Modal';
+import { Dropdown } from '../../components/Dropdown';
 import {
   useReactTable,
   getCoreRowModel,
@@ -135,21 +136,21 @@ export const PlansPage = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleView(info.row.original)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+              className="p-1.5 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
               title="View"
             >
               <Eye className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleEdit(info.row.original)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+              className="p-1.5 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleDelete(info.row.original.id)}
-              className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 transition-colors"
+              className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
@@ -282,52 +283,56 @@ export const PlansPage = () => {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-white">Plans</h1>
-        </div>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-glass text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          Add Plan
-        </button>
-      </div>
-
-      <div className="bg-gray-800 border border-gray-700 rounded p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[200px]">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-white mb-4">Plans</h1>
+        
+        {/* Search, Filters and Action Button Row */}
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: Search and Filters */}
+          <div className="flex items-center gap-3 flex-1">
+            <div className="min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search plans..."
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200/60 dark:border-gray-600 rounded-xl bg-white/80 backdrop-blur-sm dark:bg-gray-700 text-slate-700 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-glass focus:border-teal-glass transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-600 rounded bg-gray-700/80 text-white placeholder-gray-500 focus:outline-none focus:border-teal-glass text-sm"
               />
             </div>
           </div>
-          <select
+            <Dropdown
             value={priceFilter}
-            onChange={(e) => setPriceFilter(e.target.value)}
-            className="px-4 py-2 border border-slate-200/60 dark:border-gray-600 rounded-xl bg-white/80 backdrop-blur-sm dark:bg-gray-700 text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass focus:border-teal-glass transition-all shadow-soft"
-          >
-            <option value="all">All Prices</option>
-            <option value="low">Low (&lt; ฿50)</option>
-            <option value="medium">Medium (฿50 - ฿100)</option>
-            <option value="high">High (&gt; ฿100)</option>
-          </select>
+              onChange={(value) => setPriceFilter(value)}
+              options={[
+                { value: 'all', label: 'All Prices' },
+                { value: 'low', label: 'Low (< ฿50)' },
+                { value: 'medium', label: 'Medium (฿50 - ฿100)' },
+                { value: 'high', label: 'High (> ฿100)' },
+              ]}
+              placeholder="All Prices"
+            />
           {(globalFilter || priceFilter !== 'all') && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white transition-colors"
+                className="flex items-center gap-2 px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
             >
               <X className="w-4 h-4" />
               Clear Filters
             </button>
           )}
+          </div>
+
+          {/* Right: Action Button */}
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            Add Plan
+          </button>
         </div>
       </div>
 
@@ -392,14 +397,14 @@ export const PlansPage = () => {
                 <button
                   onClick={() => table.setPageIndex(0)}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronsLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -409,14 +414,14 @@ export const PlansPage = () => {
                 <button
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                   disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronsRight className="w-4 h-4" />
                 </button>
@@ -468,13 +473,13 @@ export const PlansPage = () => {
                   setIsViewModalOpen(false);
                   handleEdit(selectedPlan);
                 }}
-                className="px-4 py-2 bg-gradient-to-r from-teal-glass to-teal-light text-white rounded-xl hover:shadow-medium transition-all duration-300 transform hover:scale-105 shadow-soft transition-colors"
+                className="px-4 py-2 bg-gradient-to-r from-teal-glass to-teal-light text-white rounded transition-all duration-300 transform hover:scale-105 transition-colors"
               >
                 Edit
               </button>
               <button
                 onClick={() => setIsViewModalOpen(false)}
-                className="px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors text-sm font-medium"
+                className="px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
               >
                 Close
               </button>
@@ -504,7 +509,7 @@ export const PlansPage = () => {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
               placeholder="Enter plan name"
             />
           </div>
@@ -515,7 +520,7 @@ export const PlansPage = () => {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
               placeholder="Enter plan description"
             />
           </div>
@@ -532,7 +537,7 @@ export const PlansPage = () => {
                 min="0"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
                 placeholder="0.00"
               />
             </div>
@@ -544,7 +549,7 @@ export const PlansPage = () => {
                 required
                 value={formData.billing_cycle}
                 onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
               >
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly</option>
@@ -558,7 +563,7 @@ export const PlansPage = () => {
               value={formData.features}
               onChange={(e) => setFormData({ ...formData, features: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass font-mono text-sm"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass font-mono text-sm"
               placeholder='["Feature 1", "Feature 2"]'
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -574,13 +579,13 @@ export const PlansPage = () => {
                 setIsEditModalOpen(false);
                 setSelectedPlan(null);
               }}
-              className="px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors text-sm font-medium"
+              className="px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 bg-teal-glass text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium"
             >
               <Save className="w-4 h-4" />
               {selectedPlan ? 'Update' : 'Create'}

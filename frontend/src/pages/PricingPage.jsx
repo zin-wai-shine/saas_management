@@ -34,7 +34,7 @@ export const PricingPage = () => {
               {plans.map((plan) => (
                 <div
                   key={plan.id}
-                  className="bg-white/10 backdrop-blur-sm p-6 rounded-lg hover:bg-white/20 transition"
+                  className="bg-white/10 backdrop-blur-sm p-6 rounded hover:bg-white/20 transition"
                 >
                   <h3 className="text-2xl font-bold text-teal-light mb-2">{plan.name}</h3>
                   <p className="text-teal-mist mb-4">{plan.description}</p>

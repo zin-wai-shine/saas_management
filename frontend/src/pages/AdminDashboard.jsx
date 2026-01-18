@@ -184,18 +184,6 @@ export const AdminDashboard = ({ children }) => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#2C323E] h-[50px] flex items-center">
         <div className="flex items-center justify-between px-6 py-2.5 w-full h-full">
           <div className="flex items-center gap-3">
-            {/* Sidebar Toggle Button */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white"
-              title={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-            >
-              {sidebarOpen ? (
-                <PanelLeftClose className="w-5 h-5" />
-              ) : (
-                <PanelLeftOpen className="w-5 h-5" />
-              )}
-            </button>
             {/* Logo */}
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-teal-glass rounded flex items-center justify-center">
@@ -203,7 +191,6 @@ export const AdminDashboard = ({ children }) => {
               </div>
               <span className="text-sm font-semibold text-white">saas.admin</span>
             </div>
-            <span className="px-2 py-0.5 bg-purple-600 rounded-full text-xs font-medium text-white">PERSONAL</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -279,7 +266,7 @@ export const AdminDashboard = ({ children }) => {
             {/* Toggle Button - Shows on hover */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="absolute -right-3 top-4 z-50 p-1.5 rounded-lg bg-[#2C323E] border border-[#3B414B] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-[#262B33]"
+              className="absolute -right-3 top-4 z-50 p-1.5 rounded bg-[#2C323E] border border-[#3B414B] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-[#262B33]"
               title={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
             >
               {sidebarOpen ? (

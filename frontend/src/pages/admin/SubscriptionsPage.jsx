@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { subscriptionAPI } from '../../api/api';
+import { Dropdown } from '../../components/Dropdown';
 import {
   useReactTable,
   getCoreRowModel,
@@ -120,14 +121,14 @@ export const SubscriptionsPage = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleEdit(info.row.original)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+              className="p-1.5 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleDelete(info.row.original.id)}
-              className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 transition-colors"
+              className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
@@ -195,49 +196,53 @@ export const SubscriptionsPage = () => {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-white">Subscriptions</h1>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-teal-glass text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium">
-          <Plus className="w-4 h-4" />
-          Add Subscription
-        </button>
-      </div>
-
-      <div className="bg-gray-800 border border-gray-700 rounded p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[200px]">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-white mb-4">Subscriptions</h1>
+        
+        {/* Search, Filters and Action Button Row */}
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: Search and Filters */}
+          <div className="flex items-center gap-3 flex-1">
+            <div className="min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search subscriptions..."
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200/60 dark:border-gray-600 rounded-xl bg-white/80 backdrop-blur-sm dark:bg-gray-700 text-slate-700 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-glass focus:border-teal-glass transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-600 rounded bg-gray-700/80 text-white placeholder-gray-500 focus:outline-none focus:border-teal-glass text-sm"
               />
             </div>
           </div>
-          <select
+          <Dropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-slate-200/60 dark:border-gray-600 rounded-xl bg-white/80 backdrop-blur-sm dark:bg-gray-700 text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass focus:border-teal-glass transition-all shadow-soft"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="expired">Expired</option>
-          </select>
+            onChange={(value) => setStatusFilter(value)}
+            options={[
+              { value: 'all', label: 'All Status' },
+              { value: 'active', label: 'Active' },
+              { value: 'cancelled', label: 'Cancelled' },
+              { value: 'expired', label: 'Expired' },
+            ]}
+            placeholder="All Status"
+          />
           {(globalFilter || statusFilter !== 'all') && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white transition-colors"
+                className="flex items-center gap-2 px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
             >
               <X className="w-4 h-4" />
               Clear Filters
             </button>
           )}
+          </div>
+
+          {/* Right: Action Button */}
+          <button className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium">
+            <Plus className="w-4 h-4" />
+            Add Subscription
+          </button>
         </div>
       </div>
 
@@ -302,14 +307,14 @@ export const SubscriptionsPage = () => {
                 <button
                   onClick={() => table.setPageIndex(0)}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronsLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -319,14 +324,14 @@ export const SubscriptionsPage = () => {
                 <button
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                   disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronsRight className="w-4 h-4" />
                 </button>

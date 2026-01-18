@@ -25,13 +25,13 @@ export const LandingPage = () => {
           <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
             <Link
               to="/search"
-              className="px-8 py-4 rounded-lg bg-teal-glass/90 backdrop-blur-sm text-white font-bold text-lg hover:scale-105 transition transform flex items-center justify-center shadow-xl shadow-teal-glass/20"
+              className="px-8 py-4 rounded bg-teal-glass/90 backdrop-blur-sm text-white font-bold text-lg hover:scale-105 transition transform flex items-center justify-center shadow-xl shadow-teal-glass/20"
             >
               <FaSearch className="mr-2" /> Find Your Business
             </Link>
             <Link
               to="/gallery"
-              className="px-8 py-4 rounded-lg border-2 border-teal-glass/20 bg-teal-glass/10 backdrop-blur-sm text-teal-glass font-bold text-lg hover:bg-teal-glass hover:text-white transition"
+              className="px-8 py-4 rounded border-2 border-teal-glass/20 bg-teal-glass/10 backdrop-blur-sm text-teal-glass font-bold text-lg hover:bg-teal-glass hover:text-white transition"
             >
               Browse Demos
             </Link>
@@ -46,19 +46,19 @@ export const LandingPage = () => {
             Why Choose SaaS Agency?
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded">
               <h3 className="text-xl font-bold mb-4 text-teal-glass">Professional Design</h3>
               <p className="text-teal-mist">
                 Get a stunning website designed by professionals in minutes, not months.
               </p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded">
               <h3 className="text-xl font-bold mb-4 text-teal-glass">Easy Management</h3>
               <p className="text-teal-mist">
                 Manage your online presence effortlessly with our intuitive dashboard.
               </p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded">
               <h3 className="text-xl font-bold mb-4 text-teal-glass">Scalable Solutions</h3>
               <p className="text-teal-mist">
                 Grow your business with plans that scale as you do.

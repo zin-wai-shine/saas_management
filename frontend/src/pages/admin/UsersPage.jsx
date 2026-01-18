@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/Modal';
+import { Dropdown } from '../../components/Dropdown';
 import {
   useReactTable,
   getCoreRowModel,
@@ -160,14 +161,14 @@ export const UsersPage = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleEdit(info.row.original)}
-              className="p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+              className="p-2 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleDelete(info.row.original.id)}
-              className="p-2 rounded-lg hover:bg-red-900 text-red-400 hover:text-white transition-colors"
+              className="p-2 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
@@ -284,61 +285,64 @@ export const UsersPage = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-white">Users</h1>
-        </div>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-glass text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          Add User
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-gray-800 border border-gray-700 rounded p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-[200px]">
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-white mb-4">Users</h1>
+        
+        {/* Search, Filters and Action Button Row */}
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: Search and Filters */}
+          <div className="flex items-center gap-3 flex-1">
+            <div className="min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search"
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 border border-gray-600 rounded bg-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-teal-glass text-sm"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-600 rounded bg-gray-700/80 text-white placeholder-gray-500 focus:outline-none focus:border-teal-glass text-sm"
               />
             </div>
           </div>
-          <select
+            <Dropdown
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-1.5 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:border-teal-glass text-sm"
-          >
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="owner">Owner</option>
-          </select>
-          <select
+              onChange={(value) => setRoleFilter(value)}
+              options={[
+                { value: 'all', label: 'All Roles' },
+                { value: 'admin', label: 'Admin' },
+                { value: 'owner', label: 'Owner' },
+              ]}
+              placeholder="All Roles"
+            />
+            <Dropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:border-teal-glass text-sm"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-          </select>
+              onChange={(value) => setStatusFilter(value)}
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'active', label: 'Active' },
+                { value: 'pending', label: 'Pending' },
+              ]}
+              placeholder="All Status"
+            />
           {(globalFilter || roleFilter !== 'all' || statusFilter !== 'all') && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
             >
-              <X className="w-4 h-4" />
-              Clear
-            </button>
+               <X className="w-4 h-4" />
+               Clear Filters
+             </button>
           )}
+          </div>
+
+          {/* Right: Action Button */}
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            Add User
+          </button>
         </div>
       </div>
 
@@ -397,14 +401,14 @@ export const UsersPage = () => {
                 <button
                   onClick={() => table.setPageIndex(0)}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronsLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -414,14 +418,14 @@ export const UsersPage = () => {
                 <button
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                   disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-lg border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded border border-white/10 bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronsRight className="w-4 h-4" />
                 </button>
@@ -452,7 +456,7 @@ export const UsersPage = () => {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
               placeholder="Enter user name"
             />
           </div>
@@ -466,7 +470,7 @@ export const UsersPage = () => {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
               placeholder="Enter email address"
             />
           </div>
@@ -480,7 +484,7 @@ export const UsersPage = () => {
               required={!selectedUser}
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
               placeholder="Enter password"
             />
           </div>
@@ -494,7 +498,7 @@ export const UsersPage = () => {
                 required
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
               >
                 <option value="owner">Owner</option>
                 <option value="admin">Admin</option>
@@ -508,7 +512,7 @@ export const UsersPage = () => {
                 required
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
               >
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
@@ -524,13 +528,13 @@ export const UsersPage = () => {
                 setIsEditModalOpen(false);
                 setSelectedUser(null);
               }}
-              className="px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors text-sm font-medium"
+              className="px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 bg-teal-glass text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium"
             >
               <Save className="w-4 h-4" />
               {selectedUser ? 'Update' : 'Create'}

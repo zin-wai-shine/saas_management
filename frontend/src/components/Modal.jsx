@@ -34,7 +34,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
       {/* Modal panel */}
       <div className="flex items-center justify-center min-h-screen px-4 py-8">
         <div
-          className={`relative bg-white/95 backdrop-blur-xl dark:bg-gray-800 rounded-2xl shadow-large transform transition-all ${sizeClasses[size]} w-full max-h-[90vh] overflow-y-auto border border-slate-200/60 dark:border-gray-700`}
+          className={`relative bg-white/95 backdrop-blur-xl dark:bg-gray-800 rounded shadow-large transform transition-all ${sizeClasses[size]} w-full max-h-[90vh] overflow-y-auto border border-slate-200/60 dark:border-gray-700`}
           onClick={(e) => e.stopPropagation()}
           style={{ zIndex: 10000 }}
         >

@@ -7,7 +7,7 @@ export const ContactPage = () => {
       <div className="px-8 py-12">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl font-bold mb-8 text-teal-light text-center">Contact Us</h1>
-          <div className="bg-white/10 backdrop-blur-sm p-8 rounded-lg">
+          <div className="bg-white/10 backdrop-blur-sm p-8 rounded">
             <form className="space-y-4">
               <div>
                 <label className="block text-teal-mist mb-2">Name</label>

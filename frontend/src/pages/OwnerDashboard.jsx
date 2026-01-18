@@ -17,7 +17,7 @@ export const OwnerDashboard = () => {
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <Link
               to="/owner/website/edit"
-              className="bg-white/10 backdrop-blur-sm p-6 rounded-lg hover:bg-white/20 transition"
+              className="bg-white/10 backdrop-blur-sm p-6 rounded hover:bg-white/20 transition"
             >
               <FaEdit className="text-4xl text-teal-glass mb-4" />
               <h3 className="text-xl font-bold text-teal-light mb-2">Edit Website</h3>
@@ -25,7 +25,7 @@ export const OwnerDashboard = () => {
             </Link>
             <Link
               to="/owner/subscription"
-              className="bg-white/10 backdrop-blur-sm p-6 rounded-lg hover:bg-white/20 transition"
+              className="bg-white/10 backdrop-blur-sm p-6 rounded hover:bg-white/20 transition"
             >
               <FaCreditCard className="text-4xl text-teal-glass mb-4" />
               <h3 className="text-xl font-bold text-teal-light mb-2">Subscription</h3>
