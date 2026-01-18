@@ -10,7 +10,6 @@ import {
   LogOut,
   Menu,
   X,
-  Search,
   Bell,
   ChevronDown,
   ShoppingCart,
@@ -61,31 +60,9 @@ export const AdminLayout = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Search - Center */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded border border-white/20 w-80">
-              <Search className="w-4 h-4 text-white/70" />
-              <input
-                type="text"
-                placeholder="Search"
-                className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-white/60"
-              />
-            </div>
-            <button className="hidden md:flex items-center justify-center w-6 h-6 rounded text-white/70 hover:text-white hover:bg-white/10">
-              <span className="text-xs">⌘K</span>
-            </button>
-
-            {/* Icons */}
-            <button className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-              <span className="text-sm">?</span>
-            </button>
+            {/* Notification Icon */}
             <button className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
               <Bell className="w-4 h-4" />
-            </button>
-            <button className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-              <span className="text-sm">🎓</span>
-            </button>
-            <button className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-              <Settings className="w-4 h-4" />
             </button>
             <button className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
               <span className="text-sm">⚙</span>
@@ -124,7 +101,7 @@ export const AdminLayout = ({ children }) => {
       {/* Sidebar - fixed below navbar, stays in place when scrolling */}
       <aside
         className={`group fixed top-[50px] left-0 z-40 transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'w-56' : 'w-16'
+          sidebarOpen ? 'w-56' : 'w-20'
         } bg-[#2C323E] border-r border-[#3B414B] shadow-xl h-[calc(100vh-50px)] ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
@@ -132,8 +109,12 @@ export const AdminLayout = ({ children }) => {
           <div className="flex flex-col h-full relative">
             {/* Toggle Button - Shows on hover */}
             <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="absolute -right-3 top-4 z-50 p-1.5 rounded bg-[#2C323E] border border-[#3B414B] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-[#262B33]"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setSidebarOpen(!sidebarOpen);
+              }}
+              className="absolute -right-6 top-3 z-50 p-1.5 rounded bg-[#2C323E] border border-[#3B414B] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-[#262B33]"
               title={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
             >
               {sidebarOpen ? (
@@ -143,18 +124,27 @@ export const AdminLayout = ({ children }) => {
               )}
             </button>
             {/* Navigation */}
-            <nav className="flex-1 px-2 py-2 overflow-y-auto pt-2">
+            <nav className={`flex-1 py-2 overflow-y-auto pt-2 ${sidebarOpen ? 'px-2' : 'px-1'}`}>
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.label}
                     to={item.path}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors ${
+                    onClick={(e) => {
+                      // Close mobile menu when clicking a link, but don't change sidebar state
+                      // Prevent sidebar from opening when clicking menu items
+                      e.stopPropagation();
+                      setMobileMenuOpen(false);
+                      // Don't change sidebarOpen state - keep it as is
+                    }}
+                    className={`flex items-center gap-3 py-2.5 rounded text-sm transition-colors ${
+                      sidebarOpen ? 'px-3' : 'px-2'
+                    } ${
                       item.active
                         ? 'bg-[#262B33] text-white'
                         : 'text-gray-300 hover:bg-[#262B33] hover:text-white'
-                    } ${!sidebarOpen && 'justify-center'}`}
+                    } ${!sidebarOpen ? 'justify-center mx-auto w-10' : 'w-full'}`}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     {sidebarOpen && <span className="font-medium">{item.label}</span>}
@@ -166,7 +156,7 @@ export const AdminLayout = ({ children }) => {
         </aside>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-56' : 'md:ml-16'}`} style={{ paddingTop: '50px' }}>
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-56' : 'md:ml-20'}`} style={{ paddingTop: '50px' }}>
         {/* Page Content */}
         <main className="bg-gray-900 min-h-[calc(100vh-50px)]">{children}</main>
       </div>
