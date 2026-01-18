@@ -1,0 +1,543 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { Modal } from '../../components/Modal';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  flexRender,
+  createColumnHelper,
+} from '@tanstack/react-table';
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ArrowUpDown,
+  Filter,
+  X,
+  Save,
+} from 'lucide-react';
+import { businessAPI } from '../../api/api';
+
+const columnHelper = createColumnHelper();
+
+export const UsersPage = () => {
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'owner',
+    status: 'active',
+  });
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      // In a real app, you'd have a users API endpoint
+      // For now, we'll fetch from businesses to get user data
+      const response = await businessAPI.list();
+      // Transform data - in real app, use users API
+      setUsers([
+        { id: 1, name: 'Super Admin', email: 'admin@saas.com', role: 'admin', status: 'active', createdAt: '2026-01-15' },
+        { id: 2, name: 'John Doe', email: 'john@example.com', role: 'owner', status: 'active', createdAt: '2026-01-16' },
+        { id: 3, name: 'Jane Smith', email: 'jane@example.com', role: 'owner', status: 'active', createdAt: '2026-01-17' },
+        { id: 4, name: 'Bob Johnson', email: 'bob@example.com', role: 'owner', status: 'active', createdAt: '2026-01-17' },
+        { id: 5, name: 'Alice Brown', email: 'alice@example.com', role: 'owner', status: 'pending', createdAt: '2026-01-18' },
+      ]);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('id', {
+        header: 'ID',
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor('name', {
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            Name
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
+        cell: (info) => (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-teal-glass flex items-center justify-center text-white text-xs font-semibold">
+              {info.getValue().charAt(0)}
+            </div>
+            <span className="font-medium">{info.getValue()}</span>
+          </div>
+        ),
+      }),
+      columnHelper.accessor('email', {
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            Email
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
+        cell: (info) => <span className="text-gray-600 dark:text-gray-400">{info.getValue()}</span>,
+      }),
+      columnHelper.accessor('role', {
+        header: 'Role',
+        cell: (info) => {
+          const role = info.getValue();
+          return (
+            <span
+              className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                role === 'admin'
+                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+              }`}
+            >
+              {role.charAt(0).toUpperCase() + role.slice(1)}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor('status', {
+        header: 'Status',
+        cell: (info) => {
+          const status = info.getValue();
+          return (
+            <span
+              className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                status === 'active'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+              }`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor('createdAt', {
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            Created
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
+        cell: (info) => new Date(info.getValue()).toLocaleDateString(),
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: 'Actions',
+        cell: (info) => (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleEdit(info.row.original)}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => handleDelete(info.row.original.id)}
+              className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 transition-colors"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ),
+      }),
+    ],
+    []
+  );
+
+  const filteredData = useMemo(() => {
+    return users.filter((user) => {
+      const matchesGlobal =
+        globalFilter === '' ||
+        user.name.toLowerCase().includes(globalFilter.toLowerCase()) ||
+        user.email.toLowerCase().includes(globalFilter.toLowerCase());
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+      const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+      return matchesGlobal && matchesRole && matchesStatus;
+    });
+  }, [users, globalFilter, roleFilter, statusFilter]);
+
+  const table = useReactTable({
+    data: filteredData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+  });
+
+  const handleAdd = () => {
+    setFormData({
+      name: '',
+      email: '',
+      password: '',
+      role: 'owner',
+      status: 'active',
+    });
+    setSelectedUser(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleEdit = (user) => {
+    setSelectedUser(user);
+    setFormData({
+      name: user.name || '',
+      email: user.email || '',
+      password: '',
+      role: user.role || 'owner',
+      status: user.status || 'active',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      try {
+        // In a real app, you'd call: await userAPI.delete(id);
+        setUsers(users.filter((u) => u.id !== id));
+        alert('User deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete user:', error);
+        alert('Failed to delete user. Please try again.');
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (selectedUser) {
+        // Update user
+        setUsers(users.map(u => u.id === selectedUser.id ? { ...u, ...formData } : u));
+        alert('User updated successfully!');
+        setIsEditModalOpen(false);
+      } else {
+        // Create user
+        const newUser = {
+          id: users.length + 1,
+          ...formData,
+          createdAt: new Date().toISOString().split('T')[0],
+        };
+        setUsers([...users, newUser]);
+        alert('User created successfully!');
+        setIsAddModalOpen(false);
+      }
+      setSelectedUser(null);
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'owner',
+        status: 'active',
+      });
+    } catch (error) {
+      console.error('Failed to save user:', error);
+      alert('Failed to save user. Please try again.');
+    }
+  };
+
+  const clearFilters = () => {
+    setGlobalFilter('');
+    setRoleFilter('all');
+    setStatusFilter('all');
+  };
+
+  return (
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-semibold text-white">Users</h1>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="flex items-center gap-2 px-3 py-1.5 bg-teal-glass text-white rounded hover:bg-teal-600 transition-colors text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Add User
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-gray-800 border border-gray-700 rounded p-4 mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[200px]">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 border border-gray-600 rounded bg-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-teal-glass text-sm"
+              />
+            </div>
+          </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-3 py-1.5 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:border-teal-glass text-sm"
+          >
+            <option value="all">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="owner">Owner</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-1.5 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:border-teal-glass text-sm"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+          </select>
+          {(globalFilter || roleFilter !== 'all' || statusFilter !== 'all') && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-white text-sm"
+            >
+              <X className="w-4 h-4" />
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-gray-800 border border-gray-700 rounded overflow-hidden">
+        {loading ? (
+          <div className="p-8 text-center text-gray-400">Loading...</div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-900 border-b border-gray-700">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className="px-4 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="bg-gray-800 hover:bg-gray-750 transition-colors"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                  filteredData.length
+                )}{' '}
+                of {filteredData.length} users
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => table.setPageIndex(0)}
+                  disabled={!table.getCanPreviousPage()}
+                  className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <ChevronsLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                  className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-sm text-gray-300">
+                  Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                </span>
+                <button
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                  className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                  disabled={!table.getCanNextPage()}
+                  className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <ChevronsRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Add/Edit Modal */}
+      <Modal
+        isOpen={isAddModalOpen || isEditModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setIsEditModalOpen(false);
+          setSelectedUser(null);
+        }}
+        title={selectedUser ? 'Edit User' : 'Add New User'}
+        size="md"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              placeholder="Enter user name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              placeholder="Enter email address"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {selectedUser ? 'New Password (leave blank to keep current)' : 'Password'} <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="password"
+              required={!selectedUser}
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              placeholder="Enter password"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Role <span className="text-red-500">*</span>
+              </label>
+              <select
+                required
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              >
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                required
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              >
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setIsEditModalOpen(false);
+                setSelectedUser(null);
+              }}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-glass to-teal-light text-white rounded-xl hover:shadow-medium transition-all duration-300 transform hover:scale-105 shadow-soft transition-colors"
+            >
+              <Save className="w-4 h-4" />
+              {selectedUser ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+};
