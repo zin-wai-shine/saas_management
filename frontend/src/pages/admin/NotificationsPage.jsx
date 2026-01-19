@@ -138,7 +138,7 @@ export const NotificationsPage = () => {
     try {
       setIsDeleting(true);
       // Try to delete from API, but don't crash if it fails (e.g. for fake data)
-      try {
+    try {
         await notificationAPI.delete(deleteId);
       } catch (e) {
         console.warn('API delete failed, falling back to local filter:', e);

@@ -7,6 +7,7 @@ import { BackgroundImage } from '../components/BackgroundImage';
 export const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [businessName, setBusinessName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { register } = useAuth();
@@ -17,7 +18,7 @@ export const RegisterPage = () => {
     setError('');
 
     try {
-      await register(name, email, password, 'owner');
+      await register(name, email, password, 'owner', businessName);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
@@ -41,6 +42,17 @@ export const RegisterPage = () => {
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-2 rounded bg-gray-800/50 backdrop-blur-md border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 focus:bg-gray-800/70 transition-all"
                 placeholder="Your name"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-gray-300 mb-2">Business Name</label>
+              <input
+                type="text"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                className="w-full px-4 py-2 rounded bg-gray-800/50 backdrop-blur-md border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 focus:bg-gray-800/70 transition-all"
+                placeholder="Your business name"
                 required
               />
             </div>

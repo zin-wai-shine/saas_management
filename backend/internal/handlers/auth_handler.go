@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"saas-management-api/internal/auth"
@@ -21,10 +23,11 @@ func NewAuthHandler(db *database.DB) *AuthHandler {
 }
 
 type RegisterRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8"`
-	Role     string `json:"role"`
+	Name         string  `json:"name" binding:"required"`
+	Email        string  `json:"email" binding:"required,email"`
+	Password     string  `json:"password" binding:"required,min=8"`
+	Role         string  `json:"role"`
+	BusinessName *string `json:"business_name"`
 }
 
 type LoginRequest struct {
@@ -63,13 +66,23 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	// Insert user
 	var user models.User
 	err = h.DB.DB.Get(&user, `
-		INSERT INTO users (name, email, password, role, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $5)
-		RETURNING id, name, email, role, created_at, updated_at
-	`, req.Name, req.Email, string(hashedPassword), role, time.Now())
+		INSERT INTO users (name, email, password, role, business_name, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $6)
+		RETURNING id, name, email, role, business_name, created_at, updated_at
+	`, req.Name, req.Email, string(hashedPassword), role, req.BusinessName, time.Now())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
+	}
+
+	// Also create a business record if business name is provided
+	if req.BusinessName != nil && *req.BusinessName != "" {
+		slug := strings.ToLower(strings.ReplaceAll(*req.BusinessName, " ", "-"))
+		h.DB.DB.Exec(`
+			INSERT INTO businesses (user_id, name, slug, status, created_at, updated_at)
+			VALUES ($1, $2, $3, 'active', $4, $4)
+			ON CONFLICT (slug) DO NOTHING
+		`, user.ID, *req.BusinessName, slug, time.Now())
 	}
 
 	// Generate token
@@ -126,5 +139,34 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) Me(c *gin.Context) {
 	user, _ := c.Get("user")
 	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+func (h *AuthHandler) SearchUsers(c *gin.Context) {
+	query := c.Query("q")
+	log.Printf("Searching users with query: %s", query)
+	if query == "" {
+		c.JSON(http.StatusOK, []models.User{})
+		return
+	}
+
+	// Make search more flexible by replacing spaces with %
+	flexibleSearch := "%" + strings.ReplaceAll(query, " ", "%") + "%"
+	var users []models.User
+	err := h.DB.DB.Select(&users, `
+		SELECT id, name, email, role, business_name, created_at, updated_at
+		FROM users
+		WHERE (name ILIKE $1 OR business_name ILIKE $1)
+		AND role != 'admin'
+		LIMIT 10
+	`, flexibleSearch)
+
+	if err != nil {
+		log.Printf("Search failed: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search users"})
+		return
+	}
+
+	log.Printf("Found %d users for query: %s (pattern: %s)", len(users), query, flexibleSearch)
+	c.JSON(http.StatusOK, users)
 }
 

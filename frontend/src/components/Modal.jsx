@@ -97,23 +97,23 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
           `}</style>
           {/* Header with fade-in animation */}
           {title && (
-            <div 
-              className="sticky top-0 bg-gray-800/80 backdrop-blur-sm flex items-center justify-between px-6 py-4 border-b border-white/10 z-10"
-              style={{
-                opacity: contentVisible ? 1 : 0,
-                transform: contentVisible ? 'translateY(0)' : 'translateY(-10px)',
-                transition: 'all 0.4s ease-out',
-                transitionDelay: contentVisible ? '0.25s' : '0s'
-              }}
+          <div 
+            className="sticky top-0 bg-gray-800/80 backdrop-blur-sm flex items-center justify-between px-6 py-4 border-b border-white/10 z-10"
+            style={{
+              opacity: contentVisible ? 1 : 0,
+              transform: contentVisible ? 'translateY(0)' : 'translateY(-10px)',
+              transition: 'all 0.4s ease-out',
+              transitionDelay: contentVisible ? '0.25s' : '0s'
+            }}
+          >
+            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-all p-1 hover:bg-white/10 rounded hover:rotate-90 duration-300"
             >
-              <h3 className="text-lg font-semibold text-white">{title}</h3>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-white transition-all p-1 hover:bg-white/10 rounded hover:rotate-90 duration-300"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+              <X className="w-5 h-5" />
+            </button>
+          </div>
           )}
 
           {!title && (

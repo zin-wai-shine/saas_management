@@ -242,7 +242,7 @@ export const UsersPage = () => {
   };
 
   const confirmDelete = async () => {
-    try {
+      try {
       setIsDeleting(true);
       // Now using the real API
       try {
@@ -254,11 +254,11 @@ export const UsersPage = () => {
       setUsers(users.filter((u) => u.id !== deleteId));
       setIsConfirmModalOpen(false);
       setIsSuccessModalOpen(true);
-    } catch (error) {
-      console.error('Failed to delete user:', error);
+      } catch (error) {
+        console.error('Failed to delete user:', error);
       // If even local state update fails (unlikely), show error
       setIsConfirmModalOpen(false);
-      alert('Failed to delete user. Please try again.');
+        alert('Failed to delete user. Please try again.');
     } finally {
       setIsDeleting(false);
       setDeleteId(null);

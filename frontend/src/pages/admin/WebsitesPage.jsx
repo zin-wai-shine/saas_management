@@ -330,10 +330,10 @@ export const WebsitesPage = () => {
       setWebsites(websites.filter((w) => w.id !== deleteId));
       setIsConfirmModalOpen(false);
       setIsSuccessModalOpen(true);
-    } catch (error) {
-      console.error('Failed to delete website:', error);
+      } catch (error) {
+        console.error('Failed to delete website:', error);
       setIsConfirmModalOpen(false);
-      alert('Failed to delete website. Please try again.');
+        alert('Failed to delete website. Please try again.');
     } finally {
       setIsDeleting(false);
       setDeleteId(null);

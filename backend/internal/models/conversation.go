@@ -27,6 +27,7 @@ type Message struct {
 	SenderID      int       `json:"sender_id" db:"sender_id"`
 	ReceiverID    int       `json:"receiver_id" db:"receiver_id"`
 	Message       string    `json:"message" db:"message"`
+	MessageType   string    `json:"message_type" db:"message_type"` // "text", "image"
 	IsRead        bool      `json:"is_read" db:"is_read"`
 	ReadAt        *time.Time `json:"read_at,omitempty" db:"read_at"`
 	CreatedAt     time.Time `json:"created_at" db:"created_at"`
@@ -40,5 +41,6 @@ type Message struct {
 type MessageCreate struct {
 	ReceiverID int    `json:"receiver_id"`
 	Message    string `json:"message"`
+	MessageType string `json:"message_type"`
 }
 

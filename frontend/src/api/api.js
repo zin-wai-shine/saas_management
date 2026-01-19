@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const currentHost = window.location.hostname;
+const DEFAULT_API_URL = `http://${currentHost}:8080/api`;
+
+const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
+// If API_URL is relative (like "/api"), we use the current origin
+export const BASE_URL = API_URL.startsWith('http') 
+  ? API_URL.split('/api')[0] 
+  : window.location.origin;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -104,6 +111,7 @@ export const userAPI = {
   create: (data) => api.post('/users', data),
   update: (id, data) => api.put(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
+  search: (q) => api.get(`/users/search?q=${q}`),
 };
 
 // Message API
@@ -114,6 +122,19 @@ export const messageAPI = {
   getMessages: (conversationId) => api.get(`/messages/conversations/${conversationId}/messages`),
   sendMessage: (data) => api.post('/messages/send', data),
   unreadCount: () => api.get('/messages/unread-count'),
+};
+
+// File API
+export const fileAPI = {
+  upload: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 export default api;

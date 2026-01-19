@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { messageAPI } from '../api/api';
+import { messageAPI, fileAPI, BASE_URL } from '../api/api';
 import {
   MessageSquare,
   X,
   Send,
   Loader2,
   Minimize2,
+  Image as ImageIcon,
+  ExternalLink,
 } from 'lucide-react';
 
 export const ChatWidget = () => {
@@ -18,9 +20,142 @@ export const ChatWidget = () => {
   const [wsStatus, setWsStatus] = useState('connecting');
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAdminOnline, setIsAdminOnline] = useState(false);
+  const [isAdminTyping, setIsAdminTyping] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const fileInputRef = useRef(null);
   
   const wsRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  // URL Detection Regex
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  const renderMessageContent = (msg) => {
+    if (msg.message_type === 'image') {
+      let images = [];
+      try {
+        if (msg.message.startsWith('[')) {
+          images = JSON.parse(msg.message);
+        } else {
+          images = [msg.message];
+        }
+      } catch (e) {
+        images = [msg.message];
+      }
+
+      return (
+        <div className={`grid gap-1 ${images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          {images.map((imgUrl, i) => {
+            const fullUrl = imgUrl.startsWith('http') 
+              ? imgUrl 
+              : `${BASE_URL}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+            
+            return (
+              <img 
+                key={i}
+                src={fullUrl} 
+                alt={`Shared ${i}`} 
+                className={`rounded-lg cursor-pointer hover:opacity-95 transition-all shadow-xl border border-white/5 object-cover w-full ${
+                  images.length === 1 ? 'max-h-48' : 'h-24 md:h-32'
+                }`}
+                onClick={() => setPreviewImage(fullUrl)}
+                onError={(e) => {
+                  if (e.target.src !== 'https://via.placeholder.com/150?text=Image+Not+Found') {
+                    e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
+                  }
+                }}
+              />
+            );
+          })}
+        </div>
+      );
+    }
+
+    const parts = msg.message.split(urlRegex);
+    return (
+      <span className="break-words">
+        {parts.map((part, i) => 
+          urlRegex.test(part) ? (
+            <a 
+              key={i} 
+              href={part} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-teal-200 hover:text-white underline inline-flex items-center gap-1"
+            >
+              {part} <ExternalLink className="w-3 h-3" />
+            </a>
+          ) : part
+        )}
+      </span>
+    );
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (files.length > 5) {
+      alert('You can only upload up to 5 images.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const uploadedUrls = [];
+      for (const file of files) {
+        const response = await fileAPI.upload(file);
+        uploadedUrls.push(response.data.url);
+      }
+      const messageContent = uploadedUrls.length === 1 ? uploadedUrls[0] : JSON.stringify(uploadedUrls);
+      await sendRealMessage(messageContent, 'image');
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Failed to upload some images.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const sendRealMessage = async (text, type = 'text') => {
+    const tempId = Date.now();
+    const optimisticMessage = {
+      id: tempId,
+      sender_id: user.id,
+      receiver_id: ADMIN_ID,
+      message: text,
+      message_type: type,
+      created_at: new Date().toISOString(),
+      isSending: true,
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+    setNewMessage('');
+    setTimeout(scrollToBottom, 50);
+
+    if (wsStatus === 'connected' && wsRef.current) {
+      wsRef.current.send(JSON.stringify({
+        receiver_id: ADMIN_ID,
+        message: text,
+        message_type: type
+      }));
+    } else {
+      try {
+        const response = await messageAPI.sendMessage({
+          receiver_id: ADMIN_ID,
+          message: text,
+          message_type: type
+        });
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...response.data, isSending: false } : m));
+      } catch (err) {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, error: true, isSending: false } : m));
+      }
+    }
+  };
+
   const reconnectAttempts = useRef(0);
   const reconnectTimeoutRef = useRef(null);
 
@@ -39,6 +174,13 @@ export const ChatWidget = () => {
       setUnreadCount(0);
     }
   }, [messages, isOpen]);
+
+  // Scroll to bottom when admin typing indicator appears
+  useEffect(() => {
+    if (isOpen && isAdminTyping) {
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [isAdminTyping, isOpen]);
 
   const connectWebSocket = () => {
     if (!user) return;
@@ -76,6 +218,18 @@ export const ChatWidget = () => {
 
           case 'online_users':
             setIsAdminOnline(users?.includes(ADMIN_ID) || false);
+            break;
+
+          case 'typing':
+            if (Number(data.receiver_id) === Number(user?.id) && Number(data.sender_id) === ADMIN_ID) {
+              if (data.is_typing) {
+                setIsAdminTyping(true);
+                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = setTimeout(() => setIsAdminTyping(false), 3000);
+              } else {
+                setIsAdminTyping(false);
+              }
+            }
             break;
 
           case 'message':
@@ -152,42 +306,35 @@ export const ChatWidget = () => {
     }
   };
 
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setNewMessage(value);
+
+    if (wsStatus === 'connected' && wsRef.current) {
+      wsRef.current.send(JSON.stringify({
+        type: 'typing',
+        receiver_id: ADMIN_ID,
+        is_typing: value.length > 0
+      }));
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !user) return;
 
     const text = newMessage.trim();
-    const tempId = Date.now();
-    
-    const optimisticMessage = {
-      id: tempId,
-      sender_id: user.id,
-      receiver_id: ADMIN_ID,
-      message: text,
-      created_at: new Date().toISOString(),
-      isSending: true,
-    };
 
-    setMessages(prev => [...prev, optimisticMessage]);
-    setNewMessage('');
-
+    // Stop typing immediately when sending
     if (wsStatus === 'connected' && wsRef.current) {
       wsRef.current.send(JSON.stringify({
+        type: 'typing',
         receiver_id: ADMIN_ID,
-        message: text
+        is_typing: false
       }));
-    } else {
-      try {
-        const response = await messageAPI.sendMessage({
-          receiver_id: ADMIN_ID,
-          message: text
-        });
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...response.data, isSending: false } : m));
-      } catch (err) {
-        console.error('Failed to send message:', err);
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, error: true } : m));
-      }
     }
+
+    await sendRealMessage(text, 'text');
   };
 
   if (!user || isAdmin()) return null;
@@ -249,12 +396,14 @@ export const ChatWidget = () => {
 
                 return (
                   <div key={msg.id || idx} className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} animate-fadeIn`}>
-                    <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl shadow-lg text-sm ${
-                      isOwn 
-                        ? 'bg-gradient-to-br from-teal-500 to-teal-600 text-white rounded-tr-none' 
-                        : 'bg-gray-800/90 border border-white/5 text-white rounded-tl-none'
+                    <div className={`max-w-[85%] transition-all duration-300 ${
+                      msg.message_type === 'image'
+                        ? 'hover:scale-[1.02]'
+                        : isOwn 
+                          ? 'bg-gradient-to-br from-teal-500 to-teal-600 text-white rounded-tr-none px-4 py-2.5 rounded-2xl shadow-lg text-sm' 
+                          : 'bg-gray-800/90 border border-white/5 text-white rounded-tl-none px-4 py-2.5 rounded-2xl shadow-lg text-sm'
                     }`}>
-                      {msg.message}
+                      {renderMessageContent(msg)}
                     </div>
                     <div className={`flex items-center gap-1.5 mt-1 px-1 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
                       <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">
@@ -275,22 +424,54 @@ export const ChatWidget = () => {
                 );
               })
             )}
-            <div ref={messagesEndRef} />
+
+            {/* Admin Typing Bubble */}
+            {isAdminTyping && (
+              <div className="flex flex-col items-start animate-fadeIn">
+                <div className="bg-gray-800/90 border border-white/5 text-white rounded-2xl rounded-tl-none px-4 py-2.5 shadow-lg">
+                  <div className="flex gap-1 items-center h-4">
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-bounce"></div>
+                  </div>
+                </div>
+                <span className="text-[9px] mt-1 font-bold uppercase tracking-widest text-gray-500 italic px-1">
+                  Admin is typing...
+                </span>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} className="h-4" />
           </div>
 
-          {/* Input */}
-          <form onSubmit={handleSendMessage} className="p-4 bg-white/5 border-t border-white/5">
-            <div className="relative group">
+          <form onSubmit={handleSendMessage} className="p-4 bg-white/5 border-t border-white/5 flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+              accept="image/*"
+              multiple
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="p-2 text-gray-400 hover:text-teal-400 transition-colors disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+            </button>
+            <div className="relative flex-1 group">
               <input
                 type="text"
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={handleInputChange}
                 placeholder="Type a message..."
                 className="w-full bg-gray-800/50 border border-white/10 rounded-xl pl-4 pr-12 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 transition-all"
               />
               <button
                 type="submit"
-                disabled={!newMessage.trim()}
+                disabled={!newMessage.trim() || uploading}
                 className="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-teal-500 text-white rounded-lg hover:bg-teal-400 transition-all disabled:opacity-30 disabled:grayscale"
               >
                 <Send className="w-4 h-4" />
@@ -319,6 +500,27 @@ export const ChatWidget = () => {
         )}
         <div className="absolute inset-0 rounded-full bg-teal-500/20 blur-xl group-hover:bg-teal-500/40 transition-all -z-10"></div>
       </button>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-fadeIn"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-[101]"
+            onClick={() => setPreviewImage(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            className="max-w-full max-h-full rounded shadow-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {

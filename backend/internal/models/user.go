@@ -10,6 +10,7 @@ type User struct {
 	Email          string    `json:"email" db:"email"`
 	Password       string    `json:"-" db:"password"`
 	Role           string    `json:"role" db:"role"`
+	BusinessName   *string   `json:"business_name,omitempty" db:"business_name"`
 	EmailVerifiedAt *time.Time `json:"email_verified_at,omitempty" db:"email_verified_at"`
 	RememberToken  *string   `json:"-" db:"remember_token"`
 	CreatedAt      time.Time `json:"created_at" db:"created_at"`

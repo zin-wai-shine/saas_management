@@ -33,15 +33,16 @@ func SeedDatabase(db *sqlx.DB) error {
 
 	// Create Owner Users
 	owners := []struct {
-		name  string
-		email string
+		name         string
+		email        string
+		businessName string
 	}{
-		{"John Doe", "john@example.com"},
-		{"Jane Smith", "jane@example.com"},
-		{"Bob Johnson", "bob@example.com"},
-		{"Alice Brown", "alice@example.com"},
-		{"Charlie Wilson", "charlie@example.com"},
-		{"Diana Prince", "diana@example.com"},
+		{"John Doe", "john@example.com", "JD Consulting"},
+		{"Jane Smith", "jane@example.com", "Smith & Co. Marketing"},
+		{"Bob Johnson", "bob@example.com", "TechStart Solutions"},
+		{"Alice Brown", "alice@example.com", "Brown Logistics"},
+		{"Charlie Wilson", "charlie@example.com", "Wilson Designs"},
+		{"Diana Prince", "diana@example.com", "Prince Media"},
 	}
 
 	var ownerIDs []int
@@ -49,11 +50,11 @@ func SeedDatabase(db *sqlx.DB) error {
 	for _, owner := range owners {
 		var id int
 		err = db.Get(&id, `
-			INSERT INTO users (name, email, password, role, created_at, updated_at)
-			VALUES ($1, $2, $3, 'owner', $4, $4)
-			ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+			INSERT INTO users (name, email, password, role, business_name, created_at, updated_at)
+			VALUES ($1, $2, $3, 'owner', $4, $5, $5)
+			ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, business_name = EXCLUDED.business_name
 			RETURNING id
-		`, owner.name, owner.email, passwordHash, time.Now())
+		`, owner.name, owner.email, passwordHash, owner.businessName, time.Now())
 		if err == nil {
 			ownerIDs = append(ownerIDs, id)
 			allUserIDs = append(allUserIDs, id)

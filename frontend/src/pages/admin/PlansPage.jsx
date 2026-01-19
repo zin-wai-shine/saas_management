@@ -279,10 +279,10 @@ export const PlansPage = () => {
       setPlans(plans.filter((p) => p.id !== deleteId));
       setIsConfirmModalOpen(false);
       setIsSuccessModalOpen(true);
-    } catch (error) {
-      console.error('Failed to delete plan:', error);
+      } catch (error) {
+        console.error('Failed to delete plan:', error);
       setIsConfirmModalOpen(false);
-      alert('Failed to delete plan. Please try again.');
+        alert('Failed to delete plan. Please try again.');
     } finally {
       setIsDeleting(false);
       setDeleteId(null);

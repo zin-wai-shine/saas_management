@@ -340,10 +340,10 @@ export const SubscriptionsPage = () => {
       setSubscriptions(subscriptions.filter((s) => s.id !== deleteId));
       setIsConfirmModalOpen(false);
       setIsSuccessModalOpen(true);
-    } catch (error) {
-      console.error('Failed to delete subscription:', error);
+      } catch (error) {
+        console.error('Failed to delete subscription:', error);
       setIsConfirmModalOpen(false);
-      alert('Failed to delete subscription. Please try again.');
+        alert('Failed to delete subscription. Please try again.');
     } finally {
       setIsDeleting(false);
       setDeleteId(null);

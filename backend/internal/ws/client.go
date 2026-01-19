@@ -66,19 +66,37 @@ func (c *Client) readPump() {
 			break
 		}
 
-		// Parse the message to add sender info and save to DB
-		var incoming struct {
-			ReceiverID int    `json:"receiver_id"`
-			Message    string `json:"message"`
+		// Parse the message to check type
+		var generic struct {
+			Type        string `json:"type"`
+			ReceiverID  int    `json:"receiver_id"`
+			Message     string `json:"message"`
+			MessageType string `json:"message_type"`
+			IsTyping    bool   `json:"is_typing"`
 		}
-		if err := json.Unmarshal(message, &incoming); err != nil {
+		if err := json.Unmarshal(message, &generic); err != nil {
 			log.Printf("error unmarshaling incoming message: %v", err)
 			continue
 		}
 
+		// Handle Typing Event
+		if generic.Type == "typing" {
+			broadcastMsg, _ := json.Marshal(map[string]interface{}{
+				"type": "typing",
+				"data": map[string]interface{}{
+					"sender_id":   c.userID,
+					"receiver_id": generic.ReceiverID,
+					"is_typing":   generic.IsTyping,
+				},
+			})
+			c.hub.broadcast <- broadcastMsg
+			continue
+		}
+
+		// Proceed with regular message saving
 		// Get or create conversation (simplified logic for WS)
 		user1ID := c.userID
-		user2ID := incoming.ReceiverID
+		user2ID := generic.ReceiverID
 		if user1ID > user2ID {
 			user1ID, user2ID = user2ID, user1ID
 		}
@@ -98,7 +116,11 @@ func (c *Client) readPump() {
 		// Save message to DB
 		now := time.Now()
 		var msg models.Message
-		err = c.hub.db.Get(&msg, "INSERT INTO messages (conversation_id, sender_id, receiver_id, message, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $5) RETURNING *", convID, c.userID, incoming.ReceiverID, incoming.Message, now)
+		msgType := generic.MessageType
+		if msgType == "" {
+			msgType = "text"
+		}
+		err = c.hub.db.Get(&msg, "INSERT INTO messages (conversation_id, sender_id, receiver_id, message, message_type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $6) RETURNING *", convID, c.userID, generic.ReceiverID, generic.Message, msgType, now)
 		if err != nil {
 			log.Printf("error saving message in WS: %v", err)
 			continue

@@ -16,6 +16,9 @@ import (
 func SetupRouter(db *sqlx.DB, cfg *config.Config) *gin.Engine {
 	r := gin.Default()
 
+	// Serve uploaded files
+	r.Static("/uploads", "./uploads")
+
 	// CORS middleware
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
@@ -34,6 +37,7 @@ func SetupRouter(db *sqlx.DB, cfg *config.Config) *gin.Engine {
 	subscriptionHandler := handlers.NewSubscriptionHandler(dbWrapper)
 	notificationHandler := handlers.NewNotificationHandler(dbWrapper)
 	messageHandler := handlers.NewMessageHandler(dbWrapper)
+	fileHandler := handlers.NewFileHandler()
 
 	// Initialize WebSocket
 	hub := ws.NewHub(dbWrapper)
@@ -63,7 +67,9 @@ func SetupRouter(db *sqlx.DB, cfg *config.Config) *gin.Engine {
 	protected.Use(middleware.AuthMiddleware())
 	{
 		protected.GET("/auth/me", authHandler.Me)
+		protected.GET("/users/search", authHandler.SearchUsers)
 		protected.GET("/ws", wsHandler.ServeWs)
+		protected.POST("/upload", fileHandler.Upload)
 
 		// Business routes
 		businesses := protected.Group("/businesses")

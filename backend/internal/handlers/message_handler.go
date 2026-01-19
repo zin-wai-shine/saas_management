@@ -347,13 +347,17 @@ func (h *MessageHandler) SendMessage(c *gin.Context) {
 
 	// Create message
 	insertMessageQuery := `
-		INSERT INTO messages (conversation_id, sender_id, receiver_id, message, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $5)
-		RETURNING id, conversation_id, sender_id, receiver_id, message, is_read, read_at, created_at, updated_at
+		INSERT INTO messages (conversation_id, sender_id, receiver_id, message, message_type, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $6)
+		RETURNING id, conversation_id, sender_id, receiver_id, message, message_type, is_read, read_at, created_at, updated_at
 	`
 	now := time.Now()
 	var message models.Message
-	err = h.DB.DB.Get(&message, insertMessageQuery, conversation.ID, senderID, receiverID, req.Message, now)
+	msgType := req.MessageType
+	if msgType == "" {
+		msgType = "text"
+	}
+	err = h.DB.DB.Get(&message, insertMessageQuery, conversation.ID, senderID, receiverID, req.Message, msgType, now)
 	if err != nil {
 		log.Printf("Error creating message: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send message"})
