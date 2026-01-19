@@ -18,6 +18,30 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 404 errors specifically
+    if (error.response?.status === 404) {
+      // If the response data is a string (like "404 page not found"), try to extract JSON
+      if (typeof error.response.data === 'string') {
+        // Try to parse as JSON if it looks like JSON
+        try {
+          const parsed = JSON.parse(error.response.data);
+          error.response.data = parsed;
+        } catch (e) {
+          // If it's not JSON, create a proper error object
+          error.response.data = {
+            error: `Route not found: ${error.config?.url || 'Unknown endpoint'}. Please check if the backend server is running and the route is registered.`,
+          };
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth API
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
@@ -61,6 +85,25 @@ export const subscriptionAPI = {
   create: (data) => api.post('/subscriptions', data),
   update: (id, data) => api.put(`/subscriptions/${id}`, data),
   delete: (id) => api.delete(`/subscriptions/${id}`),
+};
+
+// Notification API
+export const notificationAPI = {
+  list: () => api.get('/notifications'),
+  get: (id) => api.get(`/notifications/${id}`),
+  create: (data) => api.post('/notifications', data),
+  update: (id, data) => api.put(`/notifications/${id}`, data),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  unreadCount: () => api.get('/notifications/unread-count'),
+};
+
+// Message API
+export const messageAPI = {
+  listConversations: () => api.get('/messages/conversations'),
+  getOrCreateConversation: (otherUserId) => api.post('/messages/conversations', { other_user_id: otherUserId }),
+  getMessages: (conversationId) => api.get(`/messages/conversations/${conversationId}/messages`),
+  sendMessage: (data) => api.post('/messages/send', data),
+  unreadCount: () => api.get('/messages/unread-count'),
 };
 
 export default api;

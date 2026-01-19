@@ -28,6 +28,9 @@ func main() {
 	log.Println("Dropping all tables for fresh start...")
 	// Drop all tables in reverse order (respecting foreign keys)
 	tables := []string{
+		"messages",
+		"conversations",
+		"notifications",
 		"payments",
 		"invoices",
 		"domains",

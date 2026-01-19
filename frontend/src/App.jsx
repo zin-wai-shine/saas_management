@@ -11,6 +11,9 @@ import { UsersPage } from './pages/admin/UsersPage';
 import { WebsitesPage } from './pages/admin/WebsitesPage';
 import { PlansPage } from './pages/admin/PlansPage';
 import { SubscriptionsPage } from './pages/admin/SubscriptionsPage';
+import { SettingsPage } from './pages/admin/SettingsPage';
+import { NotificationsPage } from './pages/admin/NotificationsPage';
+import { MessagesPage } from './pages/admin/MessagesPage';
 import { OwnerDashboard } from './pages/OwnerDashboard';
 import { GalleryPage } from './pages/GalleryPage';
 import { PricingPage } from './pages/PricingPage';
@@ -81,6 +84,36 @@ function App() {
               <ProtectedRoute requireAdmin>
                 <AdminLayout>
                   <SubscriptionsPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminLayout>
+                  <SettingsPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/notifications"
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminLayout>
+                  <NotificationsPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/messages"
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminLayout>
+                  <MessagesPage />
                 </AdminLayout>
               </ProtectedRoute>
             }

@@ -3,12 +3,14 @@
 # Quick script to start the backend with correct database credentials
 
 echo "Starting backend with database: sass_management"
+echo "User: postgres"
 echo "Password: takerisknow"
+echo "Port: 5433"
 echo ""
 
 cd backend
 
-export DATABASE_URL="postgres://postgres:takerisknow@localhost:5432/sass_management?sslmode=disable"
+export DATABASE_URL="postgres://postgres:takerisknow@localhost:5433/sass_management?sslmode=disable"
 export JWT_SECRET="your-secret-key-change-in-production"
 export PORT="8080"
 

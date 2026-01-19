@@ -31,6 +31,7 @@ func SetupRouter(db *sqlx.DB, cfg *config.Config) *gin.Engine {
 	planHandler := handlers.NewPlanHandler(dbWrapper)
 	subscriptionHandler := handlers.NewSubscriptionHandler(dbWrapper)
 	notificationHandler := handlers.NewNotificationHandler(dbWrapper)
+	messageHandler := handlers.NewMessageHandler(dbWrapper)
 
 	// Public routes
 	api := r.Group("/api")
@@ -93,6 +94,16 @@ func SetupRouter(db *sqlx.DB, cfg *config.Config) *gin.Engine {
 			notifications.POST("", notificationHandler.Create)
 			notifications.PUT("/:id", notificationHandler.Update)
 			notifications.DELETE("/:id", notificationHandler.Delete)
+		}
+
+		// Message/Conversation routes (all authenticated users)
+		messages := protected.Group("/messages")
+		{
+			messages.GET("/conversations", messageHandler.ListConversations)
+			messages.POST("/conversations", messageHandler.GetOrCreateConversation)
+			messages.GET("/conversations/:id/messages", messageHandler.GetMessages)
+			messages.POST("/send", messageHandler.SendMessage)
+			messages.GET("/unread-count", messageHandler.GetUnreadCount)
 		}
 	}
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { notificationAPI } from '../api/api';
 import {
   LayoutDashboard,
   Users,
@@ -17,24 +18,45 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  Home,
+  MessageSquare,
+  MessageCircle,
 } from 'lucide-react';
 
 export const AdminLayout = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission, hasAllPermissionsForSection } = useAuth();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
   const currentPath = location.pathname;
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: Users, label: 'Users', path: '/admin/users' },
-    { icon: Globe, label: 'Websites', path: '/admin/websites' },
-    { icon: CreditCard, label: 'Plans', path: '/admin/plans' },
-    { icon: ShoppingCart, label: 'Subscriptions', path: '/admin/subscriptions' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
-  ].map((item) => ({
+  // Define menu items with their required permissions
+  const allMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', permission: 'dashboard_view', section: 'dashboard' },
+    { icon: Users, label: 'Users', path: '/admin/users', permission: 'users_view', section: 'users' },
+    { icon: Globe, label: 'Websites', path: '/admin/websites', permission: 'websites_view', section: 'websites' },
+    { icon: CreditCard, label: 'Plans', path: '/admin/plans', permission: 'plans_view', section: 'plans' },
+    { icon: ShoppingCart, label: 'Subscriptions', path: '/admin/subscriptions', permission: 'subscriptions_view', section: 'subscriptions' },
+    { icon: MessageSquare, label: 'Notifications', path: '/admin/notifications', permission: null, section: null }, // No permission check - accessible to all admins
+    { icon: MessageCircle, label: 'Messages', path: '/admin/messages', permission: null, section: null }, // No permission check - accessible to all admins
+    { icon: Settings, label: 'Settings', path: '/admin/settings', permission: 'settings_view', section: 'settings' },
+  ];
+
+  // Filter menu items based on permissions
+  // Hide menu item if user doesn't have the required view permission
+  const menuItems = allMenuItems
+    .filter((item) => {
+      // If permission is null, show to all admins (like Notifications)
+      if (item.permission === null) {
+        return true;
+      }
+      // If user doesn't have the view permission for this section, hide the menu item
+      return hasPermission(item.permission);
+    })
+    .map((item) => ({
     ...item,
     active:
       currentPath === item.path || (item.path !== '/admin/dashboard' && currentPath.startsWith(item.path)),
@@ -44,28 +66,51 @@ export const AdminLayout = ({ children }) => {
     document.documentElement.classList.add('dark');
   }, []);
 
+  useEffect(() => {
+    // Fetch unread count
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await notificationAPI.unreadCount();
+        setUnreadCount(response.data?.count || 0);
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen dark bg-gray-900">
       {/* Top Header - Full Width Blue Bar */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#2C323E] h-[50px] flex items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#1E2938] h-[60px] flex items-center">
         <div className="flex items-center justify-between px-6 py-2.5 w-full h-full">
           <div className="flex items-center gap-3">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-teal-glass rounded flex items-center justify-center">
-                <span className="text-white font-bold text-xs">SA</span>
+              <div className="w-8 h-8 bg-teal-500/20 backdrop-blur-md border border-teal-500/30 rounded flex items-center justify-center">
+                <span className="text-teal-400 font-bold text-sm">SA</span>
               </div>
               <span className="text-sm font-semibold text-white">saas.admin</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* User Interface Link */}
+            <Link
+              to="/"
+              className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              title="Go to User Interface"
+            >
+              <Home className="w-4 h-4" />
+            </Link>
+
             {/* Notification Icon */}
             <button className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
               <Bell className="w-4 h-4" />
-            </button>
-            <button className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-              <span className="text-sm">⚙</span>
             </button>
 
             {/* User Avatar */}
@@ -74,19 +119,19 @@ export const AdminLayout = ({ children }) => {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="p-1 rounded-full hover:bg-white/10 transition-colors"
               >
-                <div className="w-7 h-7 rounded-full bg-teal-glass flex items-center justify-center text-white text-xs font-semibold">
+                <div className="w-9 h-9 rounded-full bg-teal-500/10 backdrop-blur-md border border-teal-500/20 flex items-center justify-center text-teal-300 text-sm font-semibold">
                   {user?.name?.charAt(0) || 'A'}
                 </div>
               </button>
               {userMenuOpen && (
-                <div className="absolute right-0 top-10 w-48 bg-[#2C323E] rounded border border-[#3B414B] shadow-lg py-1 z-50">
+                <div className="absolute right-0 top-10 w-48 bg-[#1E2938] rounded border border-[#3B414B] shadow-lg py-1 z-50">
                 <div className="px-4 py-2 border-b border-[#3B414B]">
                   <p className="text-sm font-medium text-white">{user?.name || 'Admin'}</p>
                   <p className="text-xs text-gray-400">{user?.email || 'admin@saas.com'}</p>
                 </div>
                 <button
                   onClick={logout}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#262B33] flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/10 flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout
@@ -100,9 +145,9 @@ export const AdminLayout = ({ children }) => {
 
       {/* Sidebar - fixed below navbar, stays in place when scrolling */}
       <aside
-        className={`group fixed top-[50px] left-0 z-40 transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'w-56' : 'w-20'
-        } bg-[#2C323E] border-r border-[#3B414B] shadow-xl h-[calc(100vh-50px)] ${
+        className={`group fixed top-[60px] left-0 z-40 transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'w-56' : 'w-16'
+        } bg-[#1E2938] h-[calc(100vh-60px)] ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -114,7 +159,7 @@ export const AdminLayout = ({ children }) => {
                 e.preventDefault();
                 setSidebarOpen(!sidebarOpen);
               }}
-              className="absolute -right-6 top-3 z-50 p-1.5 rounded bg-[#2C323E] border border-[#3B414B] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-[#262B33]"
+              className="absolute -right-6 top-3 z-50 p-1.5 rounded bg-[#1E2938] border border-[#3B414B] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-white/10"
               title={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
             >
               {sidebarOpen ? (
@@ -142,8 +187,8 @@ export const AdminLayout = ({ children }) => {
                       sidebarOpen ? 'px-3' : 'px-2'
                     } ${
                       item.active
-                        ? 'bg-[#262B33] text-white'
-                        : 'text-gray-300 hover:bg-[#262B33] hover:text-white'
+                        ? 'bg-white/10 text-white'
+                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
                     } ${!sidebarOpen ? 'justify-center mx-auto w-10' : 'w-full'}`}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
@@ -156,9 +201,9 @@ export const AdminLayout = ({ children }) => {
         </aside>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-56' : 'md:ml-20'}`} style={{ paddingTop: '50px' }}>
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-56' : 'md:ml-16'}`} style={{ paddingTop: '60px' }}>
         {/* Page Content */}
-        <main className="bg-gray-900 min-h-[calc(100vh-50px)]">{children}</main>
+        <main className="bg-gray-900 min-h-[calc(100vh-60px)]">{children}</main>
       </div>
 
       {/* Mobile Overlay */}

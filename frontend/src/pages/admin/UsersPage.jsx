@@ -74,7 +74,15 @@ export const UsersPage = () => {
   const columns = useMemo(
     () => [
       columnHelper.accessor('id', {
-        header: 'ID',
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            ID
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor('name', {
@@ -89,7 +97,7 @@ export const UsersPage = () => {
         ),
         cell: (info) => (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-teal-glass flex items-center justify-center text-white text-xs font-semibold">
+            <div className="w-8 h-8 rounded-full bg-teal-500/10 backdrop-blur-md border border-teal-500/20 flex items-center justify-center text-teal-300 text-xs font-semibold">
               {info.getValue().charAt(0)}
             </div>
             <span className="font-medium">{info.getValue()}</span>
@@ -114,10 +122,10 @@ export const UsersPage = () => {
           const role = info.getValue();
           return (
             <span
-              className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+              className={`px-2.5 py-1 rounded text-xs font-medium ${
                 role === 'admin'
-                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                  ? 'bg-purple-900/20 backdrop-blur-md border border-purple-700/30 text-purple-400'
+                  : 'bg-blue-900/20 backdrop-blur-md border border-blue-700/30 text-blue-400'
               }`}
             >
               {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -131,10 +139,10 @@ export const UsersPage = () => {
           const status = info.getValue();
           return (
             <span
-              className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+              className={`px-2.5 py-1 rounded text-xs font-medium ${
                 status === 'active'
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  ? 'bg-green-900/20 backdrop-blur-md border border-green-700/30 text-green-400'
+                  : 'bg-yellow-900/20 backdrop-blur-md border border-yellow-700/30 text-yellow-400'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -329,9 +337,9 @@ export const UsersPage = () => {
               onClick={clearFilters}
                 className="flex items-center gap-2 px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
             >
-               <X className="w-4 h-4" />
+              <X className="w-4 h-4" />
                Clear Filters
-             </button>
+            </button>
           )}
           </div>
 
@@ -374,7 +382,7 @@ export const UsersPage = () => {
                   {table.getRowModel().rows.map((row) => (
                     <tr
                       key={row.id}
-                      className="bg-gray-800 hover:bg-gray-750 transition-colors"
+                      className="bg-gray-800 hover:bg-gray-750 transition-colors border-b-0 focus:outline-none active:outline-none"
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td key={cell.id} className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
@@ -494,29 +502,29 @@ export const UsersPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Role <span className="text-red-500">*</span>
               </label>
-              <select
-                required
+              <Dropdown
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
-              >
-                <option value="owner">Owner</option>
-                <option value="admin">Admin</option>
-              </select>
+                onChange={(value) => setFormData({ ...formData, role: value })}
+                options={[
+                  { value: 'owner', label: 'Owner' },
+                  { value: 'admin', label: 'Admin' },
+                ]}
+                placeholder="Select Role"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Status <span className="text-red-500">*</span>
               </label>
-              <select
-                required
+              <Dropdown
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
-              >
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-              </select>
+                onChange={(value) => setFormData({ ...formData, status: value })}
+                options={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'pending', label: 'Pending' },
+                ]}
+                placeholder="Select Status"
+              />
             </div>
           </div>
 

@@ -23,7 +23,6 @@ import {
   ArrowUpDown,
   X,
   CreditCard,
-  DollarSign,
   Save,
   Eye,
 } from 'lucide-react';
@@ -66,7 +65,15 @@ export const PlansPage = () => {
   const columns = useMemo(
     () => [
       columnHelper.accessor('id', {
-        header: 'ID',
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            ID
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor('name', {
@@ -81,7 +88,9 @@ export const PlansPage = () => {
         ),
         cell: (info) => (
           <div className="flex items-center gap-3">
-            <CreditCard className="w-5 h-5 text-teal-glass" />
+            <div className="w-8 h-8 rounded bg-teal-500/10 backdrop-blur-md border border-teal-500/20 flex items-center justify-center">
+              <CreditCard className="w-4 h-4 text-teal-300" />
+            </div>
             <span className="font-medium">{info.getValue()}</span>
           </div>
         ),
@@ -103,16 +112,13 @@ export const PlansPage = () => {
           </button>
         ),
         cell: (info) => (
-          <div className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-green-500" />
-            <span className="font-semibold">฿{info.getValue().toFixed(2)}</span>
-          </div>
+          <span className="font-semibold">฿{info.getValue().toFixed(2)}</span>
         ),
       }),
       columnHelper.accessor('billing_cycle', {
         header: 'Billing',
         cell: (info) => (
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+          <span className="px-2.5 py-1 rounded text-xs font-medium bg-blue-900/20 backdrop-blur-md border border-blue-700/30 text-blue-400">
             {info.getValue()}
           </span>
         ),
@@ -368,7 +374,7 @@ export const PlansPage = () => {
                     </tr>
                   ) : (
                     table.getRowModel().rows.map((row, index) => (
-                      <tr key={row.id} className={`${index % 2 === 0 ? 'bg-white/40' : 'bg-white/60'} dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/50 transition-all duration-200`}>
+                      <tr key={row.id} className={`${index % 2 === 0 ? 'bg-white/40' : 'bg-white/60'} dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/50 transition-all duration-200 border-b-0 focus:outline-none active:outline-none`}>
                         {row.getVisibleCells().map((cell) => (
                           <td
                             key={cell.id}
@@ -545,15 +551,15 @@ export const PlansPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Billing Cycle <span className="text-red-500">*</span>
               </label>
-              <select
-                required
+              <Dropdown
                 value={formData.billing_cycle}
-                onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
+                onChange={(value) => setFormData({ ...formData, billing_cycle: value })}
+                options={[
+                  { value: 'monthly', label: 'Monthly' },
+                  { value: 'yearly', label: 'Yearly' },
+                ]}
+                placeholder="Select Billing Cycle"
+              />
             </div>
           </div>
 

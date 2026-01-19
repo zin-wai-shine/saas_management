@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { subscriptionAPI } from '../../api/api';
+import { subscriptionAPI, businessAPI, planAPI } from '../../api/api';
 import { Dropdown } from '../../components/Dropdown';
+import { Modal } from '../../components/Modal';
 import {
   useReactTable,
   getCoreRowModel,
@@ -25,18 +26,32 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Save,
 } from 'lucide-react';
 
 const columnHelper = createColumnHelper();
 
 export const SubscriptionsPage = () => {
   const [subscriptions, setSubscriptions] = useState([]);
+  const [businesses, setBusinesses] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [globalFilter, setGlobalFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
+  const [formData, setFormData] = useState({
+    business_id: '',
+    plan_id: '',
+    status: 'active',
+    ends_at: '',
+  });
 
   useEffect(() => {
     fetchSubscriptions();
+    fetchBusinesses();
+    fetchPlans();
   }, []);
 
   const fetchSubscriptions = async () => {
@@ -50,19 +65,88 @@ export const SubscriptionsPage = () => {
     }
   };
 
+  const fetchBusinesses = async () => {
+    try {
+      const response = await businessAPI.list();
+      setBusinesses(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch businesses:', error);
+    }
+  };
+
+  const fetchPlans = async () => {
+    try {
+      const response = await planAPI.list();
+      setPlans(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch plans:', error);
+    }
+  };
+
+  const getBusinessName = (businessId) => {
+    const business = businesses.find(b => b.id === businessId);
+    return business ? business.name : `Business #${businessId}`;
+  };
+
+  const getPlanName = (planId) => {
+    const plan = plans.find(p => p.id === planId);
+    return plan ? plan.name : `Plan #${planId}`;
+  };
+
   const columns = useMemo(
     () => [
       columnHelper.accessor('id', {
-        header: 'ID',
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            ID
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor('business_id', {
-        header: 'Business ID',
-        cell: (info) => info.getValue(),
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            Business
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
+        cell: (info) => {
+          const businessId = info.getValue();
+          return (
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{getBusinessName(businessId)}</span>
+            </div>
+          );
+        },
       }),
       columnHelper.accessor('plan_id', {
-        header: 'Plan ID',
-        cell: (info) => info.getValue(),
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            Plan
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
+        cell: (info) => {
+          const planId = info.getValue();
+          return (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded bg-teal-500/10 backdrop-blur-md border border-teal-500/20 flex items-center justify-center">
+                <ShoppingCart className="w-4 h-4 text-teal-300" />
+              </div>
+              <span className="font-medium">{getPlanName(planId)}</span>
+            </div>
+          );
+        },
       }),
       columnHelper.accessor('status', {
         header: ({ column }) => (
@@ -77,9 +161,9 @@ export const SubscriptionsPage = () => {
         cell: (info) => {
           const status = info.getValue();
           const styles = {
-            active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-            cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-            expired: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+            active: 'bg-green-900/20 backdrop-blur-md border border-green-700/30 text-green-400',
+            cancelled: 'bg-red-900/20 backdrop-blur-md border border-red-700/30 text-red-400',
+            expired: 'bg-gray-800/20 backdrop-blur-md border border-gray-700/30 text-gray-400',
           };
           const icons = {
             active: CheckCircle2,
@@ -88,7 +172,7 @@ export const SubscriptionsPage = () => {
           };
           const Icon = icons[status] || Clock;
           return (
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${styles[status] || styles.expired}`}>
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium ${styles[status] || styles.expired}`}>
               <Icon className="w-3 h-3" />
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
@@ -121,7 +205,7 @@ export const SubscriptionsPage = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleEdit(info.row.original)}
-              className="p-1.5 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
+              className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
@@ -137,16 +221,22 @@ export const SubscriptionsPage = () => {
         ),
       }),
     ],
-    []
+    [businesses, plans]
   );
 
   const filteredData = useMemo(() => {
     return subscriptions.filter((sub) => {
-      const matchesGlobal = globalFilter === '' || sub.id.toString().includes(globalFilter);
+      const businessName = getBusinessName(sub.business_id).toLowerCase();
+      const planName = getPlanName(sub.plan_id).toLowerCase();
+      const matchesGlobal =
+        globalFilter === '' ||
+        businessName.includes(globalFilter.toLowerCase()) ||
+        planName.includes(globalFilter.toLowerCase()) ||
+        sub.id.toString().includes(globalFilter);
       const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
       return matchesGlobal && matchesStatus;
     });
-  }, [subscriptions, globalFilter, statusFilter]);
+  }, [subscriptions, globalFilter, statusFilter, businesses, plans]);
 
   const table = useReactTable({
     data: filteredData,
@@ -162,17 +252,60 @@ export const SubscriptionsPage = () => {
     },
   });
 
-  const handleEdit = async (subscription) => {
-    const newStatus = window.prompt('Enter new status (active/cancelled/expired):', subscription.status);
-    if (newStatus && ['active', 'cancelled', 'expired'].includes(newStatus.toLowerCase())) {
-      try {
-        await subscriptionAPI.update(subscription.id, { status: newStatus.toLowerCase() });
-        setSubscriptions(subscriptions.map(s => s.id === subscription.id ? { ...s, status: newStatus.toLowerCase() } : s));
+  const handleAdd = () => {
+    setFormData({
+      business_id: '',
+      plan_id: '',
+      status: 'active',
+      ends_at: '',
+    });
+    setSelectedSubscription(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleEdit = (subscription) => {
+    setSelectedSubscription(subscription);
+    setFormData({
+      business_id: subscription.business_id?.toString() || '',
+      plan_id: subscription.plan_id?.toString() || '',
+      status: subscription.status || 'active',
+      ends_at: subscription.ends_at ? new Date(subscription.ends_at).toISOString().split('T')[0] : '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const data = {
+        business_id: parseInt(formData.business_id),
+        plan_id: parseInt(formData.plan_id),
+        status: formData.status,
+        ends_at: formData.ends_at || null,
+      };
+
+      if (selectedSubscription) {
+        // Update
+        await subscriptionAPI.update(selectedSubscription.id, data);
         alert('Subscription updated successfully!');
-      } catch (error) {
-        console.error('Failed to update subscription:', error);
-        alert('Failed to update subscription. Please try again.');
+        setIsEditModalOpen(false);
+      } else {
+        // Create
+        await subscriptionAPI.create(data);
+        alert('Subscription created successfully!');
+        setIsAddModalOpen(false);
       }
+      fetchSubscriptions();
+      setSelectedSubscription(null);
+      setFormData({
+        business_id: '',
+        plan_id: '',
+        status: 'active',
+        ends_at: '',
+      });
+    } catch (error) {
+      console.error('Failed to save subscription:', error);
+      alert('Failed to save subscription. Please try again.');
     }
   };
 
@@ -239,7 +372,10 @@ export const SubscriptionsPage = () => {
           </div>
 
           {/* Right: Action Button */}
-          <button className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium">
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium"
+          >
             <Plus className="w-4 h-4" />
             Add Subscription
           </button>
@@ -277,8 +413,8 @@ export const SubscriptionsPage = () => {
                       </td>
                     </tr>
                   ) : (
-                    table.getRowModel().rows.map((row, index) => (
-                      <tr key={row.id} className={`${index % 2 === 0 ? 'bg-white/40' : 'bg-white/60'} dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/50 transition-all duration-200`}>
+                      table.getRowModel().rows.map((row, index) => (
+                      <tr key={row.id} className={`${index % 2 === 0 ? 'bg-white/40' : 'bg-white/60'} dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/50 transition-all duration-200 border-b-0 focus:outline-none active:outline-none`}>
                         {row.getVisibleCells().map((cell) => (
                           <td
                             key={cell.id}
@@ -340,6 +476,105 @@ export const SubscriptionsPage = () => {
           </>
         )}
       </div>
+
+      {/* Add/Edit Modal */}
+      <Modal
+        isOpen={isAddModalOpen || isEditModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setIsEditModalOpen(false);
+          setSelectedSubscription(null);
+        }}
+        title={selectedSubscription ? 'Edit Subscription' : 'Add New Subscription'}
+        size="md"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Business <span className="text-red-500">*</span>
+            </label>
+            <Dropdown
+              value={formData.business_id}
+              onChange={(value) => setFormData({ ...formData, business_id: value })}
+              options={[
+                { value: '', label: 'Select Business' },
+                ...businesses.map((business) => ({
+                  value: business.id.toString(),
+                  label: business.name,
+                })),
+              ]}
+              placeholder="Select Business"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Plan <span className="text-red-500">*</span>
+            </label>
+            <Dropdown
+              value={formData.plan_id}
+              onChange={(value) => setFormData({ ...formData, plan_id: value })}
+              options={[
+                { value: '', label: 'Select Plan' },
+                ...plans.map((plan) => ({
+                  value: plan.id.toString(),
+                  label: plan.name,
+                })),
+              ]}
+              placeholder="Select Plan"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Status <span className="text-red-500">*</span>
+            </label>
+            <Dropdown
+              value={formData.status}
+              onChange={(value) => setFormData({ ...formData, status: value })}
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'cancelled', label: 'Cancelled' },
+                { value: 'expired', label: 'Expired' },
+              ]}
+              placeholder="Select Status"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Ends At
+            </label>
+            <input
+              type="date"
+              value={formData.ends_at}
+              onChange={(e) => setFormData({ ...formData, ends_at: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setIsEditModalOpen(false);
+                setSelectedSubscription(null);
+              }}
+              className="px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium"
+            >
+              <Save className="w-4 h-4" />
+              {selectedSubscription ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

@@ -25,6 +25,7 @@ import {
   Globe,
   Eye,
   Save,
+  ExternalLink,
 } from 'lucide-react';
 
 const columnHelper = createColumnHelper();
@@ -41,11 +42,11 @@ export const WebsitesPage = () => {
   const [selectedWebsite, setSelectedWebsite] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
+    url: '',
     theme_name: 'professional',
     status: 'pending',
     is_demo: false,
     is_claimed: false,
-    content: '{}',
   });
 
   useEffect(() => {
@@ -67,7 +68,15 @@ export const WebsitesPage = () => {
   const columns = useMemo(
     () => [
       columnHelper.accessor('id', {
-        header: 'ID',
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            ID
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor('title', {
@@ -82,15 +91,60 @@ export const WebsitesPage = () => {
         ),
         cell: (info) => (
           <div className="flex items-center gap-3">
-            <Globe className="w-5 h-5 text-teal-glass" />
+            <div className="w-8 h-8 rounded bg-teal-500/10 backdrop-blur-md border border-teal-500/20 flex items-center justify-center">
+              <Globe className="w-4 h-4 text-teal-300" />
+            </div>
             <span className="font-medium">{info.getValue()}</span>
           </div>
         ),
       }),
+      columnHelper.accessor('url', {
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="flex items-center gap-2 hover:text-teal-glass"
+          >
+            URL
+            <ArrowUpDown className="w-4 h-4" />
+          </button>
+        ),
+        cell: (info) => {
+          const rowData = info.row.original;
+          const url = rowData.url || info.getValue() || rowData.website_url || rowData.domain || '';
+          
+          if (!url || url.trim() === '' || url === 'null') {
+            return <span className="text-gray-500">N/A</span>;
+          }
+          
+          const cleanUrl = url.trim();
+          const displayUrl = cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://') 
+            ? cleanUrl 
+            : `https://${cleanUrl}`;
+          
+          return (
+            <a
+              href={displayUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                window.open(displayUrl, '_blank', 'noopener,noreferrer');
+              }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-teal-glass/10 backdrop-blur-sm border border-teal-glass/30 text-teal-glass hover:bg-teal-glass/20 hover:border-teal-glass/50 transition-all text-sm font-medium cursor-pointer group"
+              title={`Visit ${displayUrl}`}
+            >
+              <Globe className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate max-w-[200px]">{cleanUrl}</span>
+              <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </a>
+          );
+        },
+      }),
       columnHelper.accessor('theme_name', {
         header: 'Theme',
         cell: (info) => (
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+          <span className="px-2.5 py-1 rounded text-xs font-medium bg-gray-800/20 backdrop-blur-md border border-gray-700/30 text-gray-400">
             {info.getValue()}
           </span>
         ),
@@ -100,12 +154,12 @@ export const WebsitesPage = () => {
         cell: (info) => {
           const status = info.getValue();
           const styles = {
-            approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-            pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-            draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+            approved: 'bg-green-900/20 backdrop-blur-md border border-green-700/30 text-green-400',
+            pending: 'bg-yellow-900/20 backdrop-blur-md border border-yellow-700/30 text-yellow-400',
+            draft: 'bg-gray-800/20 backdrop-blur-md border border-gray-700/30 text-gray-400',
           };
           return (
-            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${styles[status] || styles.pending}`}>
+            <span className={`px-2.5 py-1 rounded text-xs font-medium ${styles[status] || styles.pending}`}>
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
           );
@@ -115,10 +169,10 @@ export const WebsitesPage = () => {
         header: 'Type',
         cell: (info) => (
           <span
-            className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+            className={`px-2.5 py-1 rounded text-xs font-medium ${
               info.getValue()
-                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                ? 'bg-blue-900/20 backdrop-blur-md border border-blue-700/30 text-blue-400'
+                : 'bg-purple-900/20 backdrop-blur-md border border-purple-700/30 text-purple-400'
             }`}
           >
             {info.getValue() ? 'Demo' : 'Live'}
@@ -129,10 +183,10 @@ export const WebsitesPage = () => {
         header: 'Claimed',
         cell: (info) => (
           <span
-            className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+            className={`px-2.5 py-1 rounded text-xs font-medium ${
               info.getValue()
-                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                ? 'bg-green-900/20 backdrop-blur-md border border-green-700/30 text-green-400'
+                : 'bg-gray-800/20 backdrop-blur-md border border-gray-700/30 text-gray-400'
             }`}
           >
             {info.getValue() ? 'Yes' : 'No'}
@@ -219,11 +273,11 @@ export const WebsitesPage = () => {
   const handleAdd = () => {
     setFormData({
       title: '',
+      url: '',
       theme_name: 'professional',
       status: 'pending',
       is_demo: false,
       is_claimed: false,
-      content: '{}',
     });
     setIsAddModalOpen(true);
   };
@@ -232,11 +286,11 @@ export const WebsitesPage = () => {
     setSelectedWebsite(website);
     setFormData({
       title: website.title || '',
+      url: website.url || website.website_url || website.domain || '',
       theme_name: website.theme_name || 'professional',
       status: website.status || 'pending',
       is_demo: website.is_demo || false,
       is_claimed: website.is_claimed || false,
-      content: typeof website.content === 'string' ? website.content : JSON.stringify(website.content || {}),
     });
     setIsEditModalOpen(true);
   };
@@ -257,46 +311,102 @@ export const WebsitesPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      let content;
-      try {
-        content = JSON.parse(formData.content);
-      } catch {
-        content = {};
-      }
-
+      const urlValue = formData.url?.trim();
+      
       const data = {
         title: formData.title,
         theme_name: formData.theme_name,
         status: formData.status,
         is_demo: formData.is_demo,
         is_claimed: formData.is_claimed,
-        content: content,
       };
+      
+      // Always include URL (even if empty) so backend can set it to NULL
+      // For create, only include if it has a value
+      // For update, always include to allow clearing the URL
+      if (selectedWebsite) {
+        // Update: always send URL (can be empty string to clear it)
+        data.url = urlValue || null;
+      } else {
+        // Create: only include if it has a value
+        if (urlValue && urlValue.length > 0) {
+          data.url = urlValue;
+        }
+      }
+
+      // Include business_id if editing existing website
+      if (selectedWebsite && selectedWebsite.business_id) {
+        data.business_id = selectedWebsite.business_id;
+      }
 
       if (selectedWebsite) {
         // Update
-        await websiteAPI.update(selectedWebsite.id, data);
+        console.log('Updating website with data:', data);
+        const response = await websiteAPI.update(selectedWebsite.id, data);
+        console.log('Update response:', response);
+        const updatedWebsite = response.data?.data || response.data || response;
+        console.log('Updated website:', updatedWebsite);
         alert('Website updated successfully!');
         setIsEditModalOpen(false);
       } else {
-        // Create
-        await websiteAPI.create(data);
+        // Create - business_id can be null for new websites
+        // Remove business_id if it's not set (backend will handle NULL)
+        if (!data.business_id) {
+          delete data.business_id;
+        }
+        console.log('Creating website with data:', data);
+        const response = await websiteAPI.create(data);
+        console.log('Create response:', response);
         alert('Website created successfully!');
         setIsAddModalOpen(false);
       }
-      fetchWebsites();
+      // Wait a bit before refetching to ensure database is updated
+      setTimeout(() => {
+        fetchWebsites();
+      }, 500);
       setSelectedWebsite(null);
       setFormData({
         title: '',
+        url: '',
         theme_name: 'professional',
         status: 'pending',
         is_demo: false,
         is_claimed: false,
-        content: '{}',
       });
     } catch (error) {
-      console.error('Failed to save website:', error);
-      alert('Failed to save website. Please try again.');
+      console.error('Failed to save website - Full error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error message:', error.message);
+      
+      let errorMessage = 'Failed to save website. Please try again.';
+      
+      // Try to extract the actual error message from the backend
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+          // If error starts with "Failed to create website:", extract the actual error
+          if (errorMessage.includes('Failed to create website:')) {
+            errorMessage = errorMessage.replace('Failed to create website: ', '');
+          }
+          if (errorMessage.includes('Failed to update website:')) {
+            errorMessage = errorMessage.replace('Failed to update website: ', '');
+          }
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Check if it's a network error
+      if (!error.response && error.message) {
+        errorMessage = `Network error: ${error.message}. Please make sure the backend server is running.`;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -403,7 +513,7 @@ export const WebsitesPage = () => {
                     </tr>
                   ) : (
                     table.getRowModel().rows.map((row, index) => (
-                      <tr key={row.id} className={`${index % 2 === 0 ? 'bg-white/40' : 'bg-white/60'} dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/50 transition-all duration-200`}>
+                      <tr key={row.id} className={`${index % 2 === 0 ? 'bg-white/40' : 'bg-white/60'} dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/50 transition-all duration-200 border-b-0 focus:outline-none active:outline-none`}>
                         {row.getVisibleCells().map((cell) => (
                           <td
                             key={cell.id}
@@ -557,36 +667,49 @@ export const WebsitesPage = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              URL
+            </label>
+            <input
+              type="url"
+              value={formData.url}
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
+              placeholder="https://example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Theme <span className="text-red-500">*</span>
             </label>
-            <select
-              required
+            <Dropdown
               value={formData.theme_name}
-              onChange={(e) => setFormData({ ...formData, theme_name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
-            >
-              <option value="professional">Professional</option>
-              <option value="modern">Modern</option>
-              <option value="tech">Tech</option>
-              <option value="restaurant">Restaurant</option>
-              <option value="fitness">Fitness</option>
-            </select>
+              onChange={(value) => setFormData({ ...formData, theme_name: value })}
+              options={[
+                { value: 'professional', label: 'Professional' },
+                { value: 'modern', label: 'Modern' },
+                { value: 'tech', label: 'Tech' },
+                { value: 'restaurant', label: 'Restaurant' },
+                { value: 'fitness', label: 'Fitness' },
+              ]}
+              placeholder="Select Theme"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Status <span className="text-red-500">*</span>
             </label>
-            <select
-              required
+            <Dropdown
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass"
-            >
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="draft">Draft</option>
-            </select>
+              onChange={(value) => setFormData({ ...formData, status: value })}
+              options={[
+                { value: 'pending', label: 'Pending' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'draft', label: 'Draft' },
+              ]}
+              placeholder="Select Status"
+            />
           </div>
 
           <div className="flex items-center gap-6">
@@ -608,17 +731,6 @@ export const WebsitesPage = () => {
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">Claimed</span>
             </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content (JSON)</label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-glass font-mono text-sm"
-              placeholder='{"sections": ["hero", "about"]}'
-            />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { notificationAPI } from '../api/api';
 import {
   LayoutDashboard,
   Users,
@@ -26,6 +27,9 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  Home,
+  MessageSquare,
+  MessageCircle,
 } from 'lucide-react';
 import {
   LineChart,
@@ -79,10 +83,12 @@ const recentActivity = [
 ];
 
 export const AdminDashboard = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const location = useLocation();
   const currentPath = location.pathname;
@@ -96,6 +102,7 @@ export const AdminDashboard = ({ children }) => {
       trend: 'up',
       icon: Users,
       color: 'bg-blue-500',
+      permission: 'dashboard_users_metric',
     },
     {
       title: 'Revenue',
@@ -104,6 +111,7 @@ export const AdminDashboard = ({ children }) => {
       trend: 'up',
       icon: DollarSign,
       color: 'bg-green-500',
+      permission: 'dashboard_revenue_metric',
     },
     {
       title: 'Active Subscriptions',
@@ -112,6 +120,7 @@ export const AdminDashboard = ({ children }) => {
       trend: 'up',
       icon: ShoppingCart,
       color: 'bg-purple-500',
+      permission: 'dashboard_subscriptions_metric',
     },
     {
       title: 'Growth Rate',
@@ -120,24 +129,57 @@ export const AdminDashboard = ({ children }) => {
       trend: 'up',
       icon: Activity,
       color: 'bg-orange-500',
+      permission: 'dashboard_growth_metric',
     },
   ];
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: Users, label: 'Users', path: '/admin/users' },
-    { icon: Globe, label: 'Websites', path: '/admin/websites' },
-    { icon: CreditCard, label: 'Plans', path: '/admin/plans' },
-    { icon: ShoppingCart, label: 'Subscriptions', path: '/admin/subscriptions' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
-  ].map((item) => ({
-    ...item,
-    active:
-      currentPath === item.path || (item.path !== '/admin/dashboard' && currentPath.startsWith(item.path)),
-  }));
+  const allMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', permission: 'dashboard_view', section: 'dashboard' },
+    { icon: Users, label: 'Users', path: '/admin/users', permission: 'users_view', section: 'users' },
+    { icon: Globe, label: 'Websites', path: '/admin/websites', permission: 'websites_view', section: 'websites' },
+    { icon: CreditCard, label: 'Plans', path: '/admin/plans', permission: 'plans_view', section: 'plans' },
+    { icon: ShoppingCart, label: 'Subscriptions', path: '/admin/subscriptions', permission: 'subscriptions_view', section: 'subscriptions' },
+    { icon: MessageSquare, label: 'Notifications', path: '/admin/notifications', permission: null, section: null }, // No permission check - accessible to all admins
+    { icon: MessageCircle, label: 'Messages', path: '/admin/messages', permission: null, section: null }, // No permission check - accessible to all admins
+    { icon: Settings, label: 'Settings', path: '/admin/settings', permission: 'settings_view', section: 'settings' },
+  ];
+
+  // Filter menu items based on permissions
+  // Hide menu item if user doesn't have the required view permission
+  const menuItems = allMenuItems
+    .filter((item) => {
+      // If permission is null, show to all admins (like Notifications)
+      if (item.permission === null) {
+        return true;
+      }
+      // If user doesn't have the view permission for this section, hide the menu item
+      return hasPermission(item.permission);
+    })
+    .map((item) => ({
+      ...item,
+      active:
+        currentPath === item.path || (item.path !== '/admin/dashboard' && currentPath.startsWith(item.path)),
+    }));
 
   useEffect(() => {
     document.documentElement.classList.add('dark');
+  }, []);
+
+  useEffect(() => {
+    // Fetch unread count
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await notificationAPI.unreadCount();
+        setUnreadCount(response.data?.count || 0);
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSort = (key) => {
@@ -149,9 +191,9 @@ export const AdminDashboard = ({ children }) => {
 
   const getStatusBadge = (status) => {
     const styles = {
-      completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+      completed: 'bg-green-900/20 backdrop-blur-md border border-green-700/30 text-green-400',
+      pending: 'bg-yellow-900/20 backdrop-blur-md border border-yellow-700/30 text-yellow-400',
+      cancelled: 'bg-red-900/20 backdrop-blur-md border border-red-700/30 text-red-400',
     };
 
     const icons = {
@@ -164,7 +206,7 @@ export const AdminDashboard = ({ children }) => {
 
     return (
       <span
-        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] || styles.pending}`}
+        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium ${styles[status] || styles.pending}`}
       >
         <Icon className="w-3 h-3" />
         {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -180,22 +222,40 @@ export const AdminDashboard = ({ children }) => {
   return (
     <div className="min-h-screen dark bg-gray-900">
       {/* Top Header - Full Width Blue Bar */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#2C323E] h-[50px] flex items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#1E2938] h-[60px] flex items-center">
         <div className="flex items-center justify-between px-6 py-2.5 w-full h-full">
           <div className="flex items-center gap-3">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-teal-glass rounded flex items-center justify-center">
-                <span className="text-white font-bold text-xs">SA</span>
+              <div className="w-8 h-8 bg-teal-500/20 backdrop-blur-md border border-teal-500/30 rounded flex items-center justify-center">
+                <span className="text-teal-400 font-bold text-sm">SA</span>
               </div>
               <span className="text-sm font-semibold text-white">saas.admin</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* User Interface Link */}
+            <Link
+              to="/"
+              className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              title="Go to User Interface"
+            >
+              <Home className="w-4 h-4" />
+            </Link>
+
             {/* Notification Icon */}
-            <button className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+            <button
+              onClick={() => navigate('/admin/notifications')}
+              className="relative p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              title="Notifications"
+            >
               <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
 
             {/* User Avatar */}
@@ -204,19 +264,19 @@ export const AdminDashboard = ({ children }) => {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="p-1 rounded-full hover:bg-white/10 transition-colors"
               >
-                <div className="w-7 h-7 rounded-full bg-teal-glass flex items-center justify-center text-white text-xs font-semibold">
+                <div className="w-9 h-9 rounded-full bg-teal-500/10 backdrop-blur-md border border-teal-500/20 flex items-center justify-center text-teal-300 text-sm font-semibold">
                   {user?.name?.charAt(0) || 'A'}
                 </div>
               </button>
               {userMenuOpen && (
-                <div className="absolute right-0 top-10 w-48 bg-[#2C323E] rounded border border-[#3B414B] shadow-lg py-1 z-50">
+                <div className="absolute right-0 top-10 w-48 bg-[#1E2938] rounded border border-[#3B414B] shadow-lg py-1 z-50">
                 <div className="px-4 py-2 border-b border-[#3B414B]">
                   <p className="text-sm font-medium text-white">{user?.name || 'Admin'}</p>
                   <p className="text-xs text-gray-400">{user?.email || 'admin@saas.com'}</p>
                 </div>
                 <button
                   onClick={logout}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#262B33] flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/10 flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout
@@ -230,9 +290,9 @@ export const AdminDashboard = ({ children }) => {
 
       {/* Sidebar - fixed below navbar, stays in place when scrolling */}
       <aside
-        className={`group fixed top-[50px] left-0 z-40 transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'w-56' : 'w-20'
-        } bg-[#2C323E] border-r border-[#3B414B] shadow-xl h-[calc(100vh-50px)] ${
+        className={`group fixed top-[60px] left-0 z-40 transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'w-56' : 'w-16'
+        } bg-[#1E2938] h-[calc(100vh-60px)] ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -244,7 +304,7 @@ export const AdminDashboard = ({ children }) => {
                 e.preventDefault();
                 setSidebarOpen(!sidebarOpen);
               }}
-              className="absolute -right-6 top-3 z-50 p-1.5 rounded bg-[#2C323E] border border-[#3B414B] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-[#262B33]"
+              className="absolute -right-6 top-3 z-50 p-1.5 rounded bg-[#1E2938] border border-[#3B414B] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white/70 hover:text-white hover:bg-white/10"
               title={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
             >
               {sidebarOpen ? (
@@ -272,8 +332,8 @@ export const AdminDashboard = ({ children }) => {
                       sidebarOpen ? 'px-3' : 'px-2'
                     } ${
                       item.active
-                        ? 'bg-[#262B33] text-white'
-                        : 'text-gray-300 hover:bg-[#262B33] hover:text-white'
+                        ? 'bg-white/10 text-white'
+                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
                     } ${!sidebarOpen ? 'justify-center mx-auto w-10' : 'w-full'}`}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
@@ -286,30 +346,49 @@ export const AdminDashboard = ({ children }) => {
         </aside>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-56' : 'md:ml-20'}`} style={{ paddingTop: '50px' }}>
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-56' : 'md:ml-16'}`} style={{ paddingTop: '60px' }}>
         {/* Dashboard Content */}
         <main className="p-6 bg-gray-900">
           {/* Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {metrics.map((metric) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
+            {metrics
+              .filter((metric) => {
+                // Show metrics based on specific permissions
+                return !metric.permission || hasPermission(metric.permission);
+              })
+              .map((metric) => {
               const Icon = metric.icon;
+              const isRevenue = metric.title === 'Revenue';
+              // Glass design color variants for icons
+              const glassColors = {
+                'bg-blue-500': 'bg-blue-500/20 border-blue-500/30 text-blue-400',
+                'bg-green-500': 'bg-green-500/20 border-green-500/30 text-green-400',
+                'bg-purple-500': 'bg-purple-500/20 border-purple-500/30 text-purple-400',
+                'bg-orange-500': 'bg-orange-500/20 border-orange-500/30 text-orange-400',
+              };
+              const glassClass = glassColors[metric.color] || 'bg-gray-500/20 border-gray-500/30 text-gray-400';
+              
               return (
                 <div
                   key={metric.title}
-                  className="bg-gray-800 border border-gray-700 rounded p-4"
+                  className="bg-gray-800 border border-gray-700 rounded p-3 w-full"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`p-2 rounded ${metric.color} bg-opacity-10`}>
-                      <Icon className={`w-5 h-5 ${metric.color.replace('bg-', 'text-')}`} />
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`w-10 h-10 flex items-center justify-center rounded border backdrop-blur-md ${glassClass}`}>
+                      {isRevenue ? (
+                        <span className="text-lg font-semibold">฿</span>
+                      ) : (
+                        <Icon className="w-5 h-5" />
+                      )}
                     </div>
                     {metric.trend === 'up' ? (
-                      <TrendingUp className="w-4 h-4 text-green-500" />
+                      <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" />
                     ) : (
-                      <TrendingDown className="w-4 h-4 text-red-500" />
+                      <TrendingDown className="w-4 h-4 text-red-500 flex-shrink-0" />
                     )}
                   </div>
-                  <h3 className="text-xs font-medium text-gray-400 mb-1">{metric.title}</h3>
-                  <p className="text-xl font-semibold text-white mb-1">{metric.value}</p>
+                  <h3 className="text-xs font-medium text-gray-400 mb-1.5">{metric.title}</h3>
+                  <p className="text-xl font-semibold text-white mb-1.5">{metric.value}</p>
                   <p className={`text-xs ${metric.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
                     {metric.change} from last month
                   </p>
@@ -319,10 +398,12 @@ export const AdminDashboard = ({ children }) => {
           </div>
 
           {/* Charts Section */}
+          {(hasPermission('dashboard_revenue_chart') || hasPermission('dashboard_category_chart')) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
             {/* Revenue Chart */}
+              {hasPermission('dashboard_revenue_chart') && (
             <div className="bg-gray-800 border border-gray-700 rounded p-4">
-              <h3 className="text-xs font-semibold text-white mb-4">Revenue Overview</h3>
+                  <h3 className="text-xs font-semibold text-white mb-4">Revenue Overview</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -337,31 +418,38 @@ export const AdminDashboard = ({ children }) => {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
+                      backgroundColor: 'rgba(31, 41, 55, 0.95)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '4px',
                       fontSize: '12px',
+                      color: '#e5e7eb',
                     }}
-                    cursor={{ stroke: '#14b8a6', strokeWidth: 1, strokeDasharray: '5 5', opacity: 0.5 }}
+                    itemStyle={{ color: '#e5e7eb' }}
+                    labelStyle={{ color: '#9ca3af' }}
+                    cursor={{ stroke: 'rgba(20, 184, 166, 0.4)', strokeWidth: 1, strokeDasharray: '5 5' }}
                   />
                   <Legend 
-                    wrapperStyle={{ fontSize: '12px' }}
+                    wrapperStyle={{ fontSize: '12px', color: '#9ca3af' }}
+                    iconType="circle"
                   />
                   <Line
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#14b8a6"
-                    strokeWidth={2}
-                    dot={{ fill: '#14b8a6', r: 3 }}
-                    activeDot={{ r: 5, fill: '#5eead4', stroke: '#14b8a6', strokeWidth: 2 }}
+                    stroke="rgba(20, 184, 166, 0.7)"
+                    strokeWidth={2.5}
+                    dot={{ fill: 'rgba(20, 184, 166, 0.8)', r: 4, strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: 'rgba(94, 234, 212, 0.7)', stroke: 'rgba(20, 184, 166, 0.6)', strokeWidth: 1.5 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
+              )}
 
             {/* Category Performance */}
+              {hasPermission('dashboard_category_chart') && (
             <div className="bg-gray-800 border border-gray-700 rounded p-4">
-              <h3 className="text-xs font-semibold text-white mb-4">Category Performance</h3>
+                  <h3 className="text-xs font-semibold text-white mb-4">Category Performance</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={categoryData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -376,26 +464,37 @@ export const AdminDashboard = ({ children }) => {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
+                      backgroundColor: 'rgba(31, 41, 55, 0.95)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '4px',
                       fontSize: '12px',
+                      color: '#e5e7eb',
                     }}
-                    cursor={{ fill: 'rgba(20, 184, 166, 0.1)' }}
+                    itemStyle={{ color: '#e5e7eb' }}
+                    labelStyle={{ color: '#9ca3af' }}
+                    cursor={{ fill: 'rgba(20, 184, 166, 0.15)' }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '12px', color: '#9ca3af' }}
+                    iconType="square"
                   />
                   <Bar 
                     dataKey="value" 
-                    fill="#14b8a6" 
+                    fill="rgba(20, 184, 166, 0.6)" 
                     radius={[4, 4, 0, 0]}
                     cursor="pointer"
-                    activeBar={{ fill: '#5eead4', opacity: 0.8 }}
+                    activeBar={{ fill: 'rgba(94, 234, 212, 0.7)', stroke: 'rgba(20, 184, 166, 0.5)', strokeWidth: 1 }}
                   />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+              )}
           </div>
+          )}
 
           {/* Recent Activity Table */}
+          {hasPermission('dashboard_activity_table') && (
           <div className="bg-gray-800 border border-gray-700 rounded overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
               <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
@@ -434,7 +533,7 @@ export const AdminDashboard = ({ children }) => {
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-teal-glass flex items-center justify-center text-white text-xs font-semibold">
+                          <div className="w-7 h-7 rounded-full bg-teal-500/10 backdrop-blur-md border border-teal-500/20 flex items-center justify-center text-teal-300 text-xs font-semibold">
                             {activity.user.charAt(0)}
                           </div>
                           <span className="text-sm text-gray-300">{activity.user}</span>
@@ -465,6 +564,7 @@ export const AdminDashboard = ({ children }) => {
               </div>
             </div>
           </div>
+          )}
         </main>
       </div>
 

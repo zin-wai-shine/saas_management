@@ -55,6 +55,33 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = () => user?.role === 'admin';
   const isOwner = () => user?.role === 'owner';
 
+  // Check if user has a specific permission
+  const hasPermission = (permission) => {
+    // If user has all permissions (super admin), return true
+    if (user?.permissions?.includes('*') || user?.role === 'admin') {
+      return true;
+    }
+    return user?.permissions?.includes(permission) || false;
+  };
+
+  // Check if user has all permissions for a feature section
+  const hasAllPermissionsForSection = (section) => {
+    const sectionPermissions = {
+      dashboard: ['dashboard_view'],
+      users: ['users_view', 'users_create', 'users_edit', 'users_delete'],
+      websites: ['websites_view', 'websites_create', 'websites_edit', 'websites_delete'],
+      plans: ['plans_view', 'plans_create', 'plans_edit', 'plans_delete'],
+      subscriptions: ['subscriptions_view', 'subscriptions_create', 'subscriptions_edit', 'subscriptions_delete'],
+      settings: ['settings_view', 'settings_manage'],
+    };
+
+    const requiredPermissions = sectionPermissions[section] || [];
+    if (requiredPermissions.length === 0) return true;
+
+    // Check if user has all required permissions for this section
+    return requiredPermissions.every(perm => hasPermission(perm));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -65,6 +92,8 @@ export const AuthProvider = ({ children }) => {
         logout,
         isAdmin,
         isOwner,
+        hasPermission,
+        hasAllPermissionsForSection,
       }}
     >
       {children}
