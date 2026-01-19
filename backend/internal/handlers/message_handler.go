@@ -23,11 +23,13 @@ func NewMessageHandler(db *database.DB) *MessageHandler {
 
 // Get or create conversation between two users
 func (h *MessageHandler) GetOrCreateConversation(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	val, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	user := val.(*models.User)
+	currentUserID := user.ID
 
 	var req struct {
 		OtherUserID int `json:"other_user_id"`
@@ -37,7 +39,6 @@ func (h *MessageHandler) GetOrCreateConversation(c *gin.Context) {
 		return
 	}
 
-	currentUserID := userID.(int)
 	otherUserID := req.OtherUserID
 
 	// Ensure user1_id < user2_id for consistency
@@ -93,31 +94,30 @@ func (h *MessageHandler) GetOrCreateConversation(c *gin.Context) {
 
 // List conversations for current user
 func (h *MessageHandler) ListConversations(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	val, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	user := val.(*models.User)
+	currentUserID := user.ID
 
-	currentUserID := userID.(int)
-	log.Printf("Fetching conversations for user ID: %d", currentUserID)
-
+	// Fetch all conversations for this user with a simplified, robust query
 	query := `
-		SELECT c.*,
-		       u1.name as user1_name,
-		       u2.name as user2_name,
-		       COALESCE((SELECT COUNT(*) FROM messages m 
-		        WHERE m.conversation_id = c.id 
-		        AND m.receiver_id = $1 
-		        AND m.is_read = FALSE), 0) as unread_count,
-		       (SELECT m.message FROM messages m 
-		        WHERE m.conversation_id = c.id 
-		        ORDER BY m.created_at DESC LIMIT 1) as last_message
+		SELECT 
+			c.id,
+			c.user1_id,
+			c.user2_id,
+			c.last_message_at,
+			c.created_at,
+			c.updated_at,
+			u1.name as user1_name,
+			u2.name as user2_name
 		FROM conversations c
 		LEFT JOIN users u1 ON c.user1_id = u1.id
 		LEFT JOIN users u2 ON c.user2_id = u2.id
 		WHERE c.user1_id = $1 OR c.user2_id = $1
-		ORDER BY c.last_message_at DESC
+		ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
 	`
 
 	var conversations []models.Conversation
@@ -128,25 +128,126 @@ func (h *MessageHandler) ListConversations(c *gin.Context) {
 		return
 	}
 
-	log.Printf("Found %d conversations for user %d", len(conversations), currentUserID)
+	// Manually populate unread_count and last_message for each conversation
+	for i := range conversations {
+		// Get unread count
+		var unreadCount int
+		h.DB.DB.Get(&unreadCount,
+			"SELECT COUNT(*) FROM messages WHERE conversation_id = $1 AND receiver_id = $2 AND is_read = FALSE",
+			conversations[i].ID, currentUserID)
+			conversations[i].UnreadCount = unreadCount
+
+		// Get last message
+		var lastMsg sql.NullString
+		h.DB.DB.Get(&lastMsg,
+			"SELECT message FROM messages WHERE conversation_id = $1 ORDER BY created_at DESC LIMIT 1",
+			conversations[i].ID)
+		if lastMsg.Valid {
+			conversations[i].LastMessage = &lastMsg.String
+		}
+	}
+
 	c.JSON(http.StatusOK, conversations)
+}
+
+// Helper function to ensure conversations exist for messages
+func (h *MessageHandler) ensureConversationsFromMessages(currentUserID int) error {
+	// Check if messages table exists and has data
+	var messageCount int
+	err := h.DB.DB.Get(&messageCount,
+		"SELECT COUNT(*) FROM messages WHERE sender_id = $1 OR receiver_id = $1", currentUserID)
+	if err != nil {
+		// Table might not exist or query failed - that's okay
+		return nil
+	}
+
+	if messageCount == 0 {
+		// No messages for this user - nothing to do
+		return nil
+	}
+
+	// Find unique conversation pairs from messages
+	type MessagePair struct {
+		User1ID  int       `db:"u1_id"`
+		User2ID  int       `db:"u2_id"`
+		FirstMsg time.Time `db:"first_msg"`
+		LastMsg  time.Time `db:"last_msg"`
+	}
+
+	var messagePairs []MessagePair
+	findPairsQuery := `
+		SELECT 
+			LEAST(sender_id, receiver_id) as u1_id,
+			GREATEST(sender_id, receiver_id) as u2_id,
+			MIN(created_at) as first_msg,
+			MAX(created_at) as last_msg
+		FROM messages
+		WHERE (sender_id = $1 OR receiver_id = $1)
+		GROUP BY LEAST(sender_id, receiver_id), GREATEST(sender_id, receiver_id)
+	`
+
+	err = h.DB.DB.Select(&messagePairs, findPairsQuery, currentUserID)
+	if err != nil {
+		return err
+	}
+
+	// Create conversations for pairs that don't exist
+	for _, pair := range messagePairs {
+		var existingID int
+		checkQuery := "SELECT id FROM conversations WHERE user1_id = $1 AND user2_id = $2"
+		err := h.DB.DB.Get(&existingID, checkQuery, pair.User1ID, pair.User2ID)
+
+		if err == sql.ErrNoRows {
+			// Create new conversation
+			insertQuery := `
+				INSERT INTO conversations (user1_id, user2_id, created_at, updated_at, last_message_at)
+				VALUES ($1, $2, $3, $4, $5)
+				ON CONFLICT (user1_id, user2_id) DO NOTHING
+			`
+			_, err = h.DB.DB.Exec(insertQuery, pair.User1ID, pair.User2ID, pair.FirstMsg, pair.LastMsg, pair.LastMsg)
+			if err != nil {
+				log.Printf("Error creating conversation for users %d-%d: %v", pair.User1ID, pair.User2ID, err)
+			}
+		} else if err != nil && err != sql.ErrNoRows {
+			log.Printf("Error checking conversation: %v", err)
+		}
+	}
+
+	// Update conversation IDs in messages that might have NULL or wrong conversation_id
+	updateMessagesQuery := `
+		UPDATE messages m
+		SET conversation_id = c.id
+		FROM conversations c
+		WHERE (m.conversation_id IS NULL OR m.conversation_id = 0)
+		AND (
+			(c.user1_id = LEAST(m.sender_id, m.receiver_id)
+			 AND c.user2_id = GREATEST(m.sender_id, m.receiver_id))
+		)
+		AND (m.sender_id = $1 OR m.receiver_id = $1)
+	`
+	_, err = h.DB.DB.Exec(updateMessagesQuery, currentUserID)
+	if err != nil {
+		log.Printf("Warning: Error updating message conversation_ids: %v", err)
+	}
+
+	return nil
 }
 
 // Get messages for a conversation
 func (h *MessageHandler) GetMessages(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	val, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	user := val.(*models.User)
+	currentUserID := user.ID
 
 	conversationID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid conversation ID"})
 		return
 	}
-
-	currentUserID := userID.(int)
 
 	// Verify user is part of this conversation
 	var conversation models.Conversation
@@ -200,19 +301,19 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 
 // Send a message
 func (h *MessageHandler) SendMessage(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	val, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	user := val.(*models.User)
+	senderID := user.ID
 
 	var req models.MessageCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	senderID := userID.(int)
 	receiverID := req.ReceiverID
 
 	// Ensure user1_id < user2_id for consistency
@@ -248,7 +349,7 @@ func (h *MessageHandler) SendMessage(c *gin.Context) {
 	insertMessageQuery := `
 		INSERT INTO messages (conversation_id, sender_id, receiver_id, message, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $5)
-		RETURNING *
+		RETURNING id, conversation_id, sender_id, receiver_id, message, is_read, read_at, created_at, updated_at
 	`
 	now := time.Now()
 	var message models.Message
@@ -264,19 +365,26 @@ func (h *MessageHandler) SendMessage(c *gin.Context) {
 
 	// Get sender name
 	var senderName string
-	h.DB.DB.Get(&senderName, "SELECT name FROM users WHERE id = $1", senderID)
+	err = h.DB.DB.Get(&senderName, "SELECT name FROM users WHERE id = $1", senderID)
+	if err == nil {
 	message.SenderName = &senderName
+	} else {
+		// Log but don't fail the entire request
+		log.Printf("Warning: Could not get sender name: %v", err)
+	}
 
 	c.JSON(http.StatusCreated, message)
 }
 
 // Get unread message count
 func (h *MessageHandler) GetUnreadCount(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	val, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	user := val.(*models.User)
+	userID := user.ID
 
 	var count int
 	err := h.DB.DB.Get(&count, "SELECT COUNT(*) FROM messages WHERE receiver_id = $1 AND is_read = FALSE", userID)
@@ -289,3 +397,54 @@ func (h *MessageHandler) GetUnreadCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"count": count})
 }
 
+// ListAll - Get all messages from database
+// Admin can see all messages, users see only their own (sent or received)
+func (h *MessageHandler) ListAll(c *gin.Context) {
+	val, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	user := val.(*models.User)
+	userID := user.ID
+	userRole := user.Role
+	isAdmin := userRole == "admin"
+
+	var messages []models.Message
+	var err error
+
+	if isAdmin {
+		// Admin sees all messages with sender and receiver names
+		query := `
+			SELECT m.*,
+			       u1.name as sender_name,
+			       u2.name as receiver_name
+			FROM messages m
+			LEFT JOIN users u1 ON m.sender_id = u1.id
+			LEFT JOIN users u2 ON m.receiver_id = u2.id
+			ORDER BY m.created_at DESC
+		`
+		err = h.DB.DB.Select(&messages, query)
+	} else {
+		// Regular users see only messages they sent or received
+		query := `
+			SELECT m.*,
+			       u1.name as sender_name,
+			       u2.name as receiver_name
+			FROM messages m
+			LEFT JOIN users u1 ON m.sender_id = u1.id
+			LEFT JOIN users u2 ON m.receiver_id = u2.id
+			WHERE m.sender_id = $1 OR m.receiver_id = $1
+			ORDER BY m.created_at DESC
+		`
+		err = h.DB.DB.Select(&messages, query, userID)
+	}
+
+	if err != nil {
+		log.Printf("Error fetching messages: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch messages"})
+		return
+	}
+
+	c.JSON(http.StatusOK, messages)
+}

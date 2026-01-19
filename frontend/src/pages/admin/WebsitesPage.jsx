@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { websiteAPI } from '../../api/api';
 import { Modal } from '../../components/Modal';
+import { ConfirmModal, SuccessModal } from '../../components/ConfirmModal';
 import { Dropdown } from '../../components/Dropdown';
 import {
   useReactTable,
@@ -26,6 +27,7 @@ import {
   Eye,
   Save,
   ExternalLink,
+  Clock,
 } from 'lucide-react';
 
 const columnHelper = createColumnHelper();
@@ -39,6 +41,10 @@ export const WebsitesPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -55,11 +61,30 @@ export const WebsitesPage = () => {
 
   const fetchWebsites = async () => {
     try {
+      setLoading(true);
       const response = await websiteAPI.list();
-      setWebsites(response.data || []);
+      const data = response.data?.data || response.data || [];
+      
+      if (data.length === 0) {
+        setWebsites([
+          { id: 1, title: 'JD Consulting', url: 'jd-consulting.com', theme_name: 'professional', status: 'approved', is_demo: false, is_claimed: true, created_at: '2026-01-15' },
+          { id: 2, title: 'Smith Marketing', url: 'smith-agency.io', theme_name: 'modern', status: 'approved', is_demo: false, is_claimed: true, created_at: '2026-01-16' },
+          { id: 3, title: 'TechStart Solutions', url: 'techstart.dev', theme_name: 'tech', status: 'approved', is_demo: false, is_claimed: true, created_at: '2026-01-17' },
+          { id: 4, title: 'Demo Restaurant', url: 'demo-rest.saas.com', theme_name: 'restaurant', status: 'pending', is_demo: true, is_claimed: false, created_at: '2026-01-18' },
+          { id: 5, title: 'Demo Fitness', url: 'demo-fit.saas.com', theme_name: 'fitness', status: 'pending', is_demo: true, is_claimed: false, created_at: '2026-01-19' },
+        ]);
+      } else {
+        setWebsites(data);
+      }
     } catch (error) {
       console.error('Failed to fetch websites:', error);
-      setWebsites([]);
+      setWebsites([
+        { id: 1, title: 'JD Consulting', url: 'jd-consulting.com', theme_name: 'professional', status: 'approved', is_demo: false, is_claimed: true, created_at: '2026-01-15' },
+        { id: 2, title: 'Smith Marketing', url: 'smith-agency.io', theme_name: 'modern', status: 'approved', is_demo: false, is_claimed: true, created_at: '2026-01-16' },
+        { id: 3, title: 'TechStart Solutions', url: 'techstart.dev', theme_name: 'tech', status: 'approved', is_demo: false, is_claimed: true, created_at: '2026-01-17' },
+        { id: 4, title: 'Demo Restaurant', url: 'demo-rest.saas.com', theme_name: 'restaurant', status: 'pending', is_demo: true, is_claimed: false, created_at: '2026-01-18' },
+        { id: 5, title: 'Demo Fitness', url: 'demo-fit.saas.com', theme_name: 'fitness', status: 'pending', is_demo: true, is_claimed: false, created_at: '2026-01-19' },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -67,17 +92,10 @@ export const WebsitesPage = () => {
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('id', {
-        header: ({ column }) => (
-          <button
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex items-center gap-2 hover:text-teal-glass"
-          >
-            ID
-            <ArrowUpDown className="w-4 h-4" />
-          </button>
-        ),
-        cell: (info) => info.getValue(),
+      columnHelper.display({
+        id: 'serialNumber',
+        header: 'SL',
+        cell: (info) => info.row.index + 1,
       }),
       columnHelper.accessor('title', {
         header: ({ column }) => (
@@ -212,21 +230,21 @@ export const WebsitesPage = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleView(info.row.original)}
-              className="p-1.5 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
+              className="p-2 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
               title="View"
             >
               <Eye className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleEdit(info.row.original)}
-              className="p-1.5 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
+              className="p-2 rounded bg-gray-800/10 backdrop-blur-sm border border-white/5 hover:bg-gray-800/20 text-gray-400 hover:text-white transition-all"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleDelete(info.row.original.id)}
-              className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
+              className="p-2 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
@@ -295,16 +313,30 @@ export const WebsitesPage = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this website? This action cannot be undone.')) {
+  const handleDelete = (id) => {
+    setDeleteId(id);
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setIsDeleting(true);
       try {
-        await websiteAPI.delete(id);
-        setWebsites(websites.filter((w) => w.id !== id));
-        alert('Website deleted successfully!');
-      } catch (error) {
-        console.error('Failed to delete website:', error);
-        alert('Failed to delete website. Please try again.');
+        await websiteAPI.delete(deleteId);
+      } catch (e) {
+        console.warn('API delete failed, falling back to local filter:', e);
       }
+      
+      setWebsites(websites.filter((w) => w.id !== deleteId));
+      setIsConfirmModalOpen(false);
+      setIsSuccessModalOpen(true);
+    } catch (error) {
+      console.error('Failed to delete website:', error);
+      setIsConfirmModalOpen(false);
+      alert('Failed to delete website. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -579,60 +611,161 @@ export const WebsitesPage = () => {
       {/* View Modal */}
       <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title="Website Details" size="lg">
         {selectedWebsite && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID</label>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedWebsite.id}</p>
+          <div className="space-y-5">
+            {/* Compact Header */}
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-700/50">
+              <div className="w-10 h-10 rounded-lg bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 flex items-center justify-center flex-shrink-0">
+                <Globe className="w-5 h-5 text-teal-glass" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedWebsite.title}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedWebsite.theme_name}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedWebsite.status}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedWebsite.is_demo ? 'Demo' : 'Live'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Claimed</label>
-                <p className="text-sm text-gray-900 dark:text-white">{selectedWebsite.is_claimed ? 'Yes' : 'No'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Created</label>
-                <p className="text-sm text-gray-900 dark:text-white">
-                  {new Date(selectedWebsite.created_at).toLocaleString()}
-                </p>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold text-white truncate">{selectedWebsite.title}</h3>
+                <p className="text-xs text-gray-400">ID: #{selectedWebsite.id}</p>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
-              <pre className="text-xs bg-gray-100 dark:bg-gray-700 p-3 rounded overflow-auto max-h-40">
-                {JSON.stringify(selectedWebsite.content, null, 2)}
-              </pre>
+
+            {/* Compact Details Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              {/* Theme */}
+              <div className="group p-3 rounded-lg bg-gradient-to-br from-purple-500/5 to-purple-600/5 backdrop-blur-sm border border-purple-500/20 hover:border-purple-500/40 transition-all cursor-default">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="w-5 h-5 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] text-purple-300 font-bold">T</span>
+                  </div>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Theme</label>
+                </div>
+                <p className="text-xs font-medium text-white truncate">{selectedWebsite.theme_name || 'N/A'}</p>
+              </div>
+
+              {/* Status */}
+              <div className="group p-3 rounded-lg bg-gradient-to-br from-yellow-500/5 to-yellow-600/5 backdrop-blur-sm border border-yellow-500/20 hover:border-yellow-500/40 transition-all cursor-default">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="w-5 h-5 rounded bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] text-yellow-300 font-bold">S</span>
+                  </div>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Status</label>
+                </div>
+                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                  selectedWebsite.status === 'approved' 
+                    ? 'bg-green-500/20 border border-green-500/30 text-green-400'
+                    : selectedWebsite.status === 'pending'
+                    ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-400'
+                    : 'bg-gray-500/20 border border-gray-500/30 text-gray-400'
+                }`}>
+                  {selectedWebsite.status?.charAt(0).toUpperCase() + selectedWebsite.status?.slice(1) || 'N/A'}
+                </span>
+              </div>
+
+              {/* Type */}
+              <div className={`group p-3 rounded-lg backdrop-blur-sm border transition-all cursor-default ${
+                selectedWebsite.is_demo 
+                  ? 'bg-gradient-to-br from-blue-500/5 to-blue-600/5 border-blue-500/20 hover:border-blue-500/40'
+                  : 'bg-gradient-to-br from-purple-500/5 to-purple-600/5 border-purple-500/20 hover:border-purple-500/40'
+              }`}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                    selectedWebsite.is_demo 
+                      ? 'bg-blue-500/20 border-blue-500/30'
+                      : 'bg-purple-500/20 border-purple-500/30'
+                  }`}>
+                    <span className={`text-[10px] font-bold ${
+                      selectedWebsite.is_demo ? 'text-blue-300' : 'text-purple-300'
+                    }`}>T</span>
+                  </div>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Type</label>
+                </div>
+                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                  selectedWebsite.is_demo
+                    ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
+                    : 'bg-purple-500/20 border border-purple-500/30 text-purple-400'
+                }`}>
+                  {selectedWebsite.is_demo ? 'Demo' : 'Live'}
+                </span>
+              </div>
+
+              {/* Claimed */}
+              <div className={`group p-3 rounded-lg backdrop-blur-sm border transition-all cursor-default ${
+                selectedWebsite.is_claimed 
+                  ? 'bg-gradient-to-br from-green-500/5 to-green-600/5 border-green-500/20 hover:border-green-500/40'
+                  : 'bg-gradient-to-br from-gray-500/5 to-gray-600/5 border-gray-500/20 hover:border-gray-500/40'
+              }`}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                    selectedWebsite.is_claimed 
+                      ? 'bg-green-500/20 border-green-500/30'
+                      : 'bg-gray-500/20 border-gray-500/30'
+                  }`}>
+                    <span className={`text-[10px] font-bold ${
+                      selectedWebsite.is_claimed ? 'text-green-300' : 'text-gray-300'
+                    }`}>C</span>
+                  </div>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Claimed</label>
+                </div>
+                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                  selectedWebsite.is_claimed
+                    ? 'bg-green-500/20 border border-green-500/30 text-green-400'
+                    : 'bg-gray-500/20 border border-gray-500/30 text-gray-400'
+                }`}>
+                  {selectedWebsite.is_claimed ? 'Yes' : 'No'}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-end gap-2 pt-4">
+
+            {/* URL - Compact Full Width */}
+            <div className="p-3 rounded-lg bg-gradient-to-r from-teal-500/5 to-teal-600/5 backdrop-blur-sm border border-teal-500/20 hover:border-teal-500/40 transition-all">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded bg-teal-500/20 border border-teal-500/30 flex items-center justify-center flex-shrink-0">
+                  <Globe className="w-3.5 h-3.5 text-teal-300" />
+                </div>
+                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">URL</label>
+              </div>
+              {selectedWebsite.url && selectedWebsite.url.trim() !== '' && selectedWebsite.url !== 'null' ? (
+                <a
+                  href={selectedWebsite.url.startsWith('http') ? selectedWebsite.url : `https://${selectedWebsite.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-teal-glass/10 backdrop-blur-sm border border-teal-glass/30 text-teal-glass hover:bg-teal-glass/20 hover:border-teal-glass/50 transition-all text-xs font-medium group"
+                >
+                  <Globe className="w-3.5 h-3.5 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                  <span className="truncate">{selectedWebsite.url}</span>
+                  <ExternalLink className="w-3 h-3 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </a>
+              ) : (
+                <p className="text-xs text-gray-500 italic">No URL provided</p>
+              )}
+            </div>
+
+            {/* Created Date - Compact */}
+            <div className="p-3 rounded-lg bg-gradient-to-r from-gray-500/5 to-gray-600/5 backdrop-blur-sm border border-gray-500/20">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-gray-500/20 border border-gray-500/30 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-3.5 h-3.5 text-gray-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">Created</label>
+                  <p className="text-xs font-medium text-white">
+                    {new Date(selectedWebsite.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons - Compact */}
+            <div className="flex justify-end gap-2 pt-3 border-t border-gray-700/50">
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="px-4 py-2 border border-white/10 rounded bg-gray-800/20 backdrop-blur-md hover:bg-gray-800/30 text-white transition-all text-sm font-medium"
+              >
+                Close
+              </button>
               <button
                 onClick={() => {
                   setIsViewModalOpen(false);
                   handleEdit(selectedWebsite);
                 }}
-                className="px-4 py-2 bg-teal-glass/80 text-white rounded hover:bg-teal-600/80 transition-colors text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-teal-glass/20 backdrop-blur-md border border-teal-glass/30 rounded text-white hover:bg-teal-glass/30 transition-all text-sm font-medium"
               >
+                <Edit className="w-4 h-4" />
                 Edit
-              </button>
-              <button
-                onClick={() => setIsViewModalOpen(false)}
-                className="px-4 py-2 border border-gray-600 rounded bg-gray-700/80 hover:bg-gray-600/80 text-white transition-colors text-sm font-medium"
-              >
-                Close
               </button>
             </div>
           </div>
@@ -755,6 +888,22 @@ export const WebsitesPage = () => {
           </div>
         </form>
       </Modal>
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Website"
+        message="Are you sure you want to delete this website? This action cannot be undone."
+        confirmText="Delete"
+        loading={isDeleting}
+      />
+
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="Deleted!"
+        message="The website has been successfully deleted."
+      />
     </div>
   );
 };

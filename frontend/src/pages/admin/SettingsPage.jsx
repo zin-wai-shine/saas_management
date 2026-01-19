@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Modal } from '../../components/Modal';
+import { ConfirmModal, SuccessModal } from '../../components/ConfirmModal';
 import { Dropdown } from '../../components/Dropdown';
 import { Switch } from '../../components/Switch';
 import { ToastContainer } from '../../components/Toast';
@@ -137,6 +138,11 @@ export const SettingsPage = () => {
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isSubAdminModalOpen, setIsSubAdminModalOpen] = useState(false);
   const [isViewPermissionsModalOpen, setIsViewPermissionsModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteType, setDeleteType] = useState(null); // 'role' or 'subadmin'
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [viewingRole, setViewingRole] = useState(null);
   const [roleFormData, setRoleFormData] = useState({
@@ -223,9 +229,32 @@ export const SettingsPage = () => {
   };
 
   const handleDeleteRole = (roleId) => {
-    if (window.confirm('Are you sure you want to delete this role? This action cannot be undone.')) {
-      setRoles(roles.filter(r => r.id !== roleId));
-      addToast('Role deleted successfully', 'success');
+    setDeleteId(roleId);
+    setDeleteType('role');
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+      // Artificial delay for cool loading effect
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (deleteType === 'role') {
+        setRoles(roles.filter(r => r.id !== deleteId));
+      } else {
+        setSubAdmins(subAdmins.filter(a => a.id !== deleteId));
+      }
+      
+      setIsConfirmModalOpen(false);
+      setIsSuccessModalOpen(true);
+    } catch (error) {
+      console.error('Failed to delete:', error);
+      addToast('Failed to delete. Please try again.', 'error');
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
+      setDeleteType(null);
     }
   };
 
@@ -272,17 +301,10 @@ export const SettingsPage = () => {
   // Define columns for roles table
   const columns = useMemo(
     () => [
-      columnHelper.accessor('id', {
-        header: ({ column }) => (
-          <button
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex items-center gap-2 hover:text-teal-glass"
-          >
-            ID
-            <ArrowUpDown className="w-4 h-4" />
-          </button>
-        ),
-        cell: (info) => info.getValue(),
+      columnHelper.display({
+        id: 'serialNumber',
+        header: 'SL',
+        cell: (info) => info.row.index + 1,
       }),
       columnHelper.accessor('name', {
         header: ({ column }) => (
@@ -324,7 +346,7 @@ export const SettingsPage = () => {
                   setViewingRole(role);
                   setIsViewPermissionsModalOpen(true);
                 }}
-                className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
+                className="p-2 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
                 title="View Permissions"
               >
                 <Eye className="w-4 h-4" />
@@ -333,14 +355,14 @@ export const SettingsPage = () => {
                 <>
                   <button
                     onClick={() => handleEditRole(role)}
-                    className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
+                    className="p-2 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
                     title="Edit"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteRole(role.id)}
-                    className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
+                    className="p-2 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -386,17 +408,10 @@ export const SettingsPage = () => {
   // Define columns for Sub-Admins table
   const subAdminColumns = useMemo(
     () => [
-      columnHelper.accessor('id', {
-        header: ({ column }) => (
-          <button
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex items-center gap-2 hover:text-teal-glass"
-          >
-            ID
-            <ArrowUpDown className="w-4 h-4" />
-          </button>
-        ),
-        cell: (info) => info.getValue(),
+      columnHelper.display({
+        id: 'serialNumber',
+        header: 'SL',
+        cell: (info) => info.row.index + 1,
       }),
       columnHelper.accessor('name', {
         header: ({ column }) => (
@@ -480,19 +495,18 @@ export const SettingsPage = () => {
                   });
                   setIsSubAdminModalOpen(true);
                 }}
-                className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
+                className="p-2 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
                 title="Edit"
               >
                 <Edit className="w-4 h-4" />
               </button>
               <button
                 onClick={() => {
-                  if (window.confirm('Are you sure you want to delete this sub-admin?')) {
-                    setSubAdmins(subAdmins.filter((a) => a.id !== admin.id));
-                    addToast('Sub-admin deleted successfully', 'success');
-                  }
+                  setDeleteId(admin.id);
+                  setDeleteType('subadmin');
+                  setIsConfirmModalOpen(true);
                 }}
-                className="p-1.5 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
+                className="p-2 rounded bg-gray-800/20 backdrop-blur-sm border border-white/10 hover:bg-gray-800/30 text-gray-400 hover:text-white transition-all"
                 title="Delete"
               >
                 <Trash2 className="w-4 h-4" />
@@ -1068,6 +1082,24 @@ export const SettingsPage = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Confirm/Success Modals */}
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={confirmDelete}
+        title={`Delete ${deleteType === 'role' ? 'Role' : 'Sub-Admin'}`}
+        message={`Are you sure you want to delete this ${deleteType === 'role' ? 'role' : 'sub-admin'}? This action cannot be undone.`}
+        confirmText="Delete"
+        loading={isDeleting}
+      />
+
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="Deleted!"
+        message={`The ${deleteType === 'role' ? 'role' : 'sub-admin'} has been successfully deleted.`}
+      />
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />

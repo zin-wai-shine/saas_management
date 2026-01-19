@@ -97,8 +97,18 @@ export const notificationAPI = {
   unreadCount: () => api.get('/notifications/unread-count'),
 };
 
+// User API (Admin)
+export const userAPI = {
+  list: () => api.get('/users'),
+  get: (id) => api.get(`/users/${id}`),
+  create: (data) => api.post('/users', data),
+  update: (id, data) => api.put(`/users/${id}`, data),
+  delete: (id) => api.delete(`/users/${id}`),
+};
+
 // Message API
 export const messageAPI = {
+  listAll: () => api.get('/messages'),
   listConversations: () => api.get('/messages/conversations'),
   getOrCreateConversation: (otherUserId) => api.post('/messages/conversations', { other_user_id: otherUserId }),
   getMessages: (conversationId) => api.get(`/messages/conversations/${conversationId}/messages`),

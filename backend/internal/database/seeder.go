@@ -461,6 +461,32 @@ func SeedDatabase(db *sqlx.DB) error {
 		log.Println("✅ Created fake conversations and messages!")
 	}
 
+	// Create Notifications
+	log.Println("Creating fake notifications...")
+	notifications := []struct {
+		fromUserID *int
+		toUserID   *int
+		subject    string
+		message    string
+		msgType    string
+		isRead     bool
+	}{
+		{nil, nil, "System Maintenance", "Scheduled maintenance on Sunday at 2 AM UTC.", "alert", false},
+		{&allUserIDs[1], nil, "New Feature Suggestion", "I would love to see a dark mode toggle in the settings!", "message", false},
+		{nil, &allUserIDs[0], "Security Alert", "New login detected from a new device.", "alert", true},
+		{&allUserIDs[2], nil, "Billing Inquiry", "I have a question about my last invoice.", "message", true},
+		{nil, nil, "Welcome to SaaS Management", "Explore our new dashboard features and let us know what you think.", "info", true},
+	}
+
+	for _, n := range notifications {
+		_, err = db.Exec(`
+			INSERT INTO notifications (from_user_id, user_id, subject, message, type, is_read, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+			ON CONFLICT DO NOTHING
+		`, n.fromUserID, n.toUserID, n.subject, n.message, n.msgType, n.isRead, time.Now().Add(-time.Hour*24))
+	}
+	log.Println("✅ Created fake notifications!")
+
 	log.Println("✅ Database seeded successfully!")
 	return nil
 }

@@ -14,6 +14,7 @@ import { SubscriptionsPage } from './pages/admin/SubscriptionsPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { NotificationsPage } from './pages/admin/NotificationsPage';
 import { MessagesPage } from './pages/admin/MessagesPage';
+import { ChatWidget } from './components/ChatWidget';
 import { OwnerDashboard } from './pages/OwnerDashboard';
 import { GalleryPage } from './pages/GalleryPage';
 import { PricingPage } from './pages/PricingPage';
@@ -128,6 +129,7 @@ function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <ChatWidget />
       </Router>
     </AuthProvider>
   );

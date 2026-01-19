@@ -1,10 +1,12 @@
 package router
 
 import (
+	"log"
 	"saas-management-api/internal/config"
 	"saas-management-api/internal/database"
 	"saas-management-api/internal/handlers"
 	"saas-management-api/internal/middleware"
+	"saas-management-api/internal/ws"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -33,6 +35,13 @@ func SetupRouter(db *sqlx.DB, cfg *config.Config) *gin.Engine {
 	notificationHandler := handlers.NewNotificationHandler(dbWrapper)
 	messageHandler := handlers.NewMessageHandler(dbWrapper)
 
+	// Initialize WebSocket
+	hub := ws.NewHub(dbWrapper)
+	go hub.Run()
+	wsHandler := handlers.NewWsHandler(hub)
+
+	log.Println("Registering WebSocket route at /api/ws")
+
 	// Public routes
 	api := r.Group("/api")
 	{
@@ -54,6 +63,7 @@ func SetupRouter(db *sqlx.DB, cfg *config.Config) *gin.Engine {
 	protected.Use(middleware.AuthMiddleware())
 	{
 		protected.GET("/auth/me", authHandler.Me)
+		protected.GET("/ws", wsHandler.ServeWs)
 
 		// Business routes
 		businesses := protected.Group("/businesses")
@@ -99,6 +109,7 @@ func SetupRouter(db *sqlx.DB, cfg *config.Config) *gin.Engine {
 		// Message/Conversation routes (all authenticated users)
 		messages := protected.Group("/messages")
 		{
+			messages.GET("", messageHandler.ListAll)
 			messages.GET("/conversations", messageHandler.ListConversations)
 			messages.POST("/conversations", messageHandler.GetOrCreateConversation)
 			messages.GET("/conversations/:id/messages", messageHandler.GetMessages)

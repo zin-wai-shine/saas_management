@@ -5,12 +5,12 @@ import (
 )
 
 type Conversation struct {
-	ID           int       `json:"id" db:"id"`
-	User1ID      int       `json:"user1_id" db:"user1_id"`
-	User2ID      int       `json:"user2_id" db:"user2_id"`
-	LastMessageAt time.Time `json:"last_message_at" db:"last_message_at"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+	ID           int        `json:"id" db:"id"`
+	User1ID      int        `json:"user1_id" db:"user1_id"`
+	User2ID      int        `json:"user2_id" db:"user2_id"`
+	LastMessageAt *time.Time `json:"last_message_at,omitempty" db:"last_message_at"`
+	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
 	
 	// Join fields
 	User1Name    *string `json:"user1_name,omitempty" db:"user1_name"`

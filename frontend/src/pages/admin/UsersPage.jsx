@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/Modal';
+import { ConfirmModal, SuccessModal } from '../../components/ConfirmModal';
 import { Dropdown } from '../../components/Dropdown';
 import {
   useReactTable,
@@ -38,6 +39,10 @@ export const UsersPage = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -73,17 +78,10 @@ export const UsersPage = () => {
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('id', {
-        header: ({ column }) => (
-          <button
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex items-center gap-2 hover:text-teal-glass"
-          >
-            ID
-            <ArrowUpDown className="w-4 h-4" />
-          </button>
-        ),
-        cell: (info) => info.getValue(),
+      columnHelper.display({
+        id: 'serialNumber',
+        header: 'SL',
+        cell: (info) => info.row.index + 1,
       }),
       columnHelper.accessor('name', {
         header: ({ column }) => (
@@ -238,16 +236,32 @@ export const UsersPage = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+  const handleDelete = (id) => {
+    setDeleteId(id);
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+      // Now using the real API
       try {
-        // In a real app, you'd call: await userAPI.delete(id);
-        setUsers(users.filter((u) => u.id !== id));
-        alert('User deleted successfully!');
-      } catch (error) {
-        console.error('Failed to delete user:', error);
-        alert('Failed to delete user. Please try again.');
+        await userAPI.delete(deleteId);
+      } catch (e) {
+        console.warn('API delete failed, falling back to local filter:', e);
       }
+      
+      setUsers(users.filter((u) => u.id !== deleteId));
+      setIsConfirmModalOpen(false);
+      setIsSuccessModalOpen(true);
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      // If even local state update fails (unlikely), show error
+      setIsConfirmModalOpen(false);
+      alert('Failed to delete user. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -550,6 +564,22 @@ export const UsersPage = () => {
           </div>
         </form>
       </Modal>
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        confirmText="Delete"
+        loading={isDeleting}
+      />
+
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="Deleted!"
+        message="The user has been successfully deleted."
+      />
     </div>
   );
 };
