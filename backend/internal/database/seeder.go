@@ -248,6 +248,7 @@ func SeedDatabase(db *sqlx.DB) error {
 		businessID int
 		title      string
 		themeName  string
+		imageURL   string
 		content    string
 		isDemo     bool
 		isClaimed  bool
@@ -257,6 +258,7 @@ func SeedDatabase(db *sqlx.DB) error {
 			businessIDs[0],
 			"JD Consulting - Professional Website",
 			"professional",
+			"/uploads/1768862575673746000.png",
 			`{"sections": ["hero", "services", "about", "contact"], "theme": "blue"}`,
 			false,
 			true,
@@ -266,6 +268,7 @@ func SeedDatabase(db *sqlx.DB) error {
 			businessIDs[1],
 			"Smith Marketing - Digital Agency",
 			"modern",
+			"/uploads/1768864523813932000.png",
 			`{"sections": ["hero", "portfolio", "testimonials", "contact"], "theme": "purple"}`,
 			false,
 			true,
@@ -275,6 +278,7 @@ func SeedDatabase(db *sqlx.DB) error {
 			businessIDs[2],
 			"TechStart Solutions - Tech Company",
 			"tech",
+			"/uploads/1768864523822644000.png",
 			`{"sections": ["hero", "products", "team", "contact"], "theme": "dark"}`,
 			false,
 			true,
@@ -284,6 +288,7 @@ func SeedDatabase(db *sqlx.DB) error {
 			businessIDs[3],
 			"Demo Restaurant - Claim This Site",
 			"restaurant",
+			"/uploads/1768864523825961000.jpg",
 			`{"sections": ["hero", "menu", "gallery", "reservations"], "theme": "warm"}`,
 			true,
 			false,
@@ -293,6 +298,7 @@ func SeedDatabase(db *sqlx.DB) error {
 			businessIDs[4],
 			"Demo Fitness Center - Claim This Site",
 			"fitness",
+			"/uploads/1768862575673746000.png",
 			`{"sections": ["hero", "classes", "trainers", "membership"], "theme": "energetic"}`,
 			true,
 			false,
@@ -302,10 +308,10 @@ func SeedDatabase(db *sqlx.DB) error {
 
 	for _, website := range websites {
 		_, err = db.Exec(`
-			INSERT INTO websites (business_id, title, theme_name, content, is_demo, is_claimed, status, created_at, updated_at)
-			VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $8)
+			INSERT INTO websites (business_id, title, theme_name, image_url, content, is_demo, is_claimed, status, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $9)
 			ON CONFLICT DO NOTHING
-		`, website.businessID, website.title, website.themeName, website.content, website.isDemo, website.isClaimed, website.status, time.Now())
+		`, website.businessID, website.title, website.themeName, website.imageURL, website.content, website.isDemo, website.isClaimed, website.status, time.Now())
 	}
 
 	// Create Subscriptions

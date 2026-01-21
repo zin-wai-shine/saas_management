@@ -99,6 +99,7 @@ func (h *WebsiteHandler) Create(c *gin.Context) {
 		BusinessID sql.NullInt64  `db:"business_id"`
 		Title      string         `db:"title"`
 		URL        sql.NullString `db:"url"`
+		ImageURL   sql.NullString `db:"image_url"`
 		ThemeName  string         `db:"theme_name"`
 		IsDemo     bool           `db:"is_demo"`
 		IsClaimed  bool           `db:"is_claimed"`
@@ -107,12 +108,17 @@ func (h *WebsiteHandler) Create(c *gin.Context) {
 		UpdatedAt  time.Time      `db:"updated_at"`
 	}
 
+	var imageURLSQL sql.NullString
+	if website.ImageURL != nil {
+		imageURLSQL = sql.NullString{String: *website.ImageURL, Valid: true}
+	}
+
 	var result WebsiteResult
 	err := h.DB.DB.Get(&result, `
-		INSERT INTO websites (business_id, title, url, theme_name, is_demo, is_claimed, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
-		RETURNING id, business_id, title, url, theme_name, is_demo, is_claimed, status, created_at, updated_at
-	`, businessIDSQL, website.Title, urlSQL, website.ThemeName, website.IsDemo, website.IsClaimed, website.Status, time.Now())
+		INSERT INTO websites (business_id, title, url, image_url, theme_name, is_demo, is_claimed, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
+		RETURNING id, business_id, title, url, image_url, theme_name, is_demo, is_claimed, status, created_at, updated_at
+	`, businessIDSQL, website.Title, urlSQL, imageURLSQL, website.ThemeName, website.IsDemo, website.IsClaimed, website.Status, time.Now())
 
 	if err != nil {
 		log.Printf("ERROR creating website: %v", err)
@@ -148,6 +154,13 @@ func (h *WebsiteHandler) Create(c *gin.Context) {
 		website.URL = &result.URL.String
 	} else {
 		website.URL = nil
+	}
+
+	// Handle nullable image_url
+	if result.ImageURL.Valid && result.ImageURL.String != "" {
+		website.ImageURL = &result.ImageURL.String
+	} else {
+		website.ImageURL = nil
 	}
 
 	log.Printf("Website created successfully with ID: %d", website.ID)
@@ -194,6 +207,7 @@ func (h *WebsiteHandler) Update(c *gin.Context) {
 		BusinessID sql.NullInt64  `db:"business_id"`
 		Title      string         `db:"title"`
 		URL        sql.NullString `db:"url"`
+		ImageURL   sql.NullString `db:"image_url"`
 		ThemeName  string         `db:"theme_name"`
 		IsDemo     bool           `db:"is_demo"`
 		IsClaimed  bool           `db:"is_claimed"`
@@ -202,13 +216,18 @@ func (h *WebsiteHandler) Update(c *gin.Context) {
 		UpdatedAt  time.Time      `db:"updated_at"`
 	}
 
+	var imageURLSQL sql.NullString
+	if website.ImageURL != nil {
+		imageURLSQL = sql.NullString{String: *website.ImageURL, Valid: true}
+	}
+
 	var result WebsiteResult
 	err = h.DB.DB.Get(&result, `
 		UPDATE websites 
-		SET title = $1, url = $2, theme_name = $3, is_demo = $4, is_claimed = $5, status = $6, updated_at = $7
-		WHERE id = $8
-		RETURNING id, business_id, title, url, theme_name, is_demo, is_claimed, status, created_at, updated_at
-	`, website.Title, urlSQL, website.ThemeName, website.IsDemo, website.IsClaimed, website.Status, time.Now(), id)
+		SET title = $1, url = $2, image_url = $3, theme_name = $4, is_demo = $5, is_claimed = $6, status = $7, updated_at = $8
+		WHERE id = $9
+		RETURNING id, business_id, title, url, image_url, theme_name, is_demo, is_claimed, status, created_at, updated_at
+	`, website.Title, urlSQL, imageURLSQL, website.ThemeName, website.IsDemo, website.IsClaimed, website.Status, time.Now(), id)
 	if err != nil {
 		log.Printf("ERROR updating website: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update website: " + err.Error()})
@@ -240,6 +259,13 @@ func (h *WebsiteHandler) Update(c *gin.Context) {
 	} else {
 		website.URL = nil
 		log.Printf("Updated URL is NULL")
+	}
+
+	// Handle nullable image_url
+	if result.ImageURL.Valid && result.ImageURL.String != "" {
+		website.ImageURL = &result.ImageURL.String
+	} else {
+		website.ImageURL = nil
 	}
 
 	log.Printf("Website updated successfully with ID: %d, URL: %v", website.ID, website.URL)
