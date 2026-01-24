@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
-import { BackgroundImage } from '../components/BackgroundImage';
+import { Footer } from '../components/Footer';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -24,51 +24,97 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen text-white relative">
-      <BackgroundImage />
+    <div className="min-h-screen relative" style={{ backgroundColor: '#111828' }}>
       <Navbar />
       <div className="relative z-10 flex items-center justify-center px-4 py-20">
-        <div className="bg-gray-800/60 backdrop-blur-md border border-white/10 p-8 rounded-xl max-w-md w-full shadow-2xl">
+        <div 
+          className="p-8 rounded-xl max-w-md w-full"
+          style={{
+            background: 'rgba(30, 41, 56, 0.6)',
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          }}
+        >
           <h2 className="text-3xl font-bold mb-6 text-white text-center">Login</h2>
-          {error && <div className="bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 p-3 rounded mb-4">{error}</div>}
+          {error && <div className="bg-red-500/20 border border-red-500/50 text-red-300 p-3 rounded-lg mb-4">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-gray-300 mb-2">Email</label>
+              <label className="block text-gray-300 mb-2 font-medium">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded bg-gray-800/50 backdrop-blur-md border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 focus:bg-gray-800/70 transition-all"
+                className="w-full px-4 py-2 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#1E2938] transition-all"
+                style={{
+                  backgroundColor: '#1E2938',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+                onFocus={(e) => {
+                  e.target.style.border = '1px solid rgba(30, 41, 56, 0.5)';
+                  e.target.style.backgroundColor = '#2A3441';
+                }}
+                onBlur={(e) => {
+                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+                  e.target.style.backgroundColor = '#1E2938';
+                }}
                 placeholder="your.email@example.com"
                 required
               />
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Password</label>
+              <label className="block text-gray-300 mb-2 font-medium">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded bg-gray-800/50 backdrop-blur-md border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 focus:bg-gray-800/70 transition-all"
+                className="w-full px-4 py-2 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#1E2938] transition-all"
+                style={{
+                  backgroundColor: '#1E2938',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+                onFocus={(e) => {
+                  e.target.style.border = '1px solid rgba(30, 41, 56, 0.5)';
+                  e.target.style.backgroundColor = '#2A3441';
+                }}
+                onBlur={(e) => {
+                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+                  e.target.style.backgroundColor = '#1E2938';
+                }}
                 placeholder="Enter your password"
                 required
               />
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 rounded-lg bg-teal-500/20 backdrop-blur-md border border-teal-500/30 text-teal-400 font-semibold hover:bg-teal-500/30 transition-all"
+              className="w-full px-4 py-2 rounded-lg text-white font-semibold transition-all"
+              style={{
+                background: 'rgba(30, 41, 56, 0.7)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.85)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.7)';
+              }}
             >
               Login
             </button>
           </form>
           <p className="mt-4 text-center text-gray-300">
             Don't have an account?{' '}
-            <Link to="/register" className="text-teal-400 hover:text-teal-300 transition-colors">
+            <Link to="/register" className="text-[#1E2938] hover:text-[#2A3441] transition-colors">
               Register
             </Link>
           </p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

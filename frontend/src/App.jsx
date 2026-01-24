@@ -17,8 +17,8 @@ import { MessagesPage } from './pages/admin/MessagesPage';
 import { ChatWidget } from './components/ChatWidget';
 import { OwnerDashboard } from './pages/OwnerDashboard';
 import { GalleryPage } from './pages/GalleryPage';
+import { DemoSitePage } from './pages/DemoSitePage';
 import { PricingPage } from './pages/PricingPage';
-import { ContactPage } from './pages/ContactPage';
 import { SearchPage } from './pages/SearchPage';
 
 function App() {
@@ -30,8 +30,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/gallery/:slug" element={<DemoSitePage />} />
+          <Route path="/plans" element={<PricingPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route
             path="/dashboard"

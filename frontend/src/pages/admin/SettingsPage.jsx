@@ -541,7 +541,7 @@ export const SettingsPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen">
+    <div className="p-6 min-h-screen" style={{ backgroundColor: '#111828' }}>
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white mb-2">Settings & Management</h1>

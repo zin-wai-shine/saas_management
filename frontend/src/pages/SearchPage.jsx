@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { businessAPI } from '../api/api';
 import { Navbar } from '../components/Navbar';
-import { BackgroundImage } from '../components/BackgroundImage';
+import { Footer } from '../components/Footer';
 import { FaSearch } from 'react-icons/fa';
 
 export const SearchPage = () => {
@@ -30,8 +30,7 @@ export const SearchPage = () => {
   );
 
   return (
-    <div className="min-h-screen text-white relative">
-      <BackgroundImage />
+    <div className="min-h-screen relative" style={{ backgroundColor: '#111828' }}>
       <Navbar />
       <div className="relative z-10 px-8 py-12">
         <div className="max-w-7xl mx-auto">
@@ -46,7 +45,22 @@ export const SearchPage = () => {
                 placeholder="Search businesses..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded bg-gray-800/50 backdrop-blur-md border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50 focus:bg-gray-800/70 transition-all"
+                className="w-full pl-12 pr-4 py-3 rounded-lg text-white placeholder-gray-400 focus:outline-none transition-all"
+                style={{
+                  background: 'rgba(30, 41, 56, 0.6)',
+                  backdropFilter: 'blur(12px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                }}
+                onFocus={(e) => {
+                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+                  e.target.style.background = 'rgba(30, 41, 56, 0.75)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                  e.target.style.background = 'rgba(30, 41, 56, 0.6)';
+                }}
               />
             </div>
           </div>
@@ -57,7 +71,22 @@ export const SearchPage = () => {
               {filteredBusinesses.map((business) => (
                 <div
                   key={business.id}
-                  className="bg-gray-800/50 backdrop-blur-md border border-white/10 p-6 rounded hover:bg-gray-800/70 transition-all"
+                  className="p-6 rounded-lg transition-all"
+                  style={{
+                    background: 'rgba(30, 41, 56, 0.6)',
+                    backdropFilter: 'blur(12px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(30, 41, 56, 0.75)';
+                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(30, 41, 56, 0.6)';
+                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                  }}
                 >
                   <h3 className="text-xl font-bold text-white mb-2">{business.name}</h3>
                   <p className="text-gray-300 mb-2">{business.industry}</p>
@@ -68,6 +97,7 @@ export const SearchPage = () => {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

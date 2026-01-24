@@ -220,7 +220,7 @@ export const AdminDashboard = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen dark bg-gray-900">
+    <div className="min-h-screen dark" style={{ backgroundColor: '#111828' }}>
       {/* Top Header - Full Width Blue Bar */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#1E2938] h-[60px] flex items-center">
         <div className="flex items-center justify-between px-6 py-2.5 w-full h-full">
@@ -348,7 +348,7 @@ export const AdminDashboard = ({ children }) => {
       {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-56' : 'md:ml-16'}`} style={{ paddingTop: '60px' }}>
         {/* Dashboard Content */}
-        <main className="p-6 bg-gray-900">
+        <main className="p-6" style={{ backgroundColor: '#111828' }}>
           {/* Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
             {metrics

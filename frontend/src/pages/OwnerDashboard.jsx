@@ -7,7 +7,7 @@ export const OwnerDashboard = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-forest-dark text-cyan-glow">
+    <div className="min-h-screen text-cyan-glow" style={{ backgroundColor: '#111828' }}>
       <Navbar />
       <div className="px-8 py-12">
         <div className="max-w-7xl mx-auto">

@@ -84,7 +84,7 @@ export const AdminLayout = ({ children }) => {
   }, []);
 
   return (
-    <div className="min-h-screen dark bg-gray-900">
+    <div className="min-h-screen dark" style={{ backgroundColor: '#111828' }}>
       {/* Top Header - Full Width Blue Bar */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#1E2938] h-[60px] flex items-center">
         <div className="flex items-center justify-between px-6 py-2.5 w-full h-full">
@@ -203,7 +203,7 @@ export const AdminLayout = ({ children }) => {
       {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-56' : 'md:ml-16'}`} style={{ paddingTop: '60px' }}>
         {/* Page Content */}
-        <main className="bg-gray-900 min-h-[calc(100vh-60px)]">{children}</main>
+        <main className="min-h-[calc(100vh-60px)]" style={{ backgroundColor: '#111828' }}>{children}</main>
       </div>
 
       {/* Mobile Overlay */}

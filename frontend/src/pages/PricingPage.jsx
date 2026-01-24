@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { planAPI } from '../api/api';
 import { Navbar } from '../components/Navbar';
-import { BackgroundImage } from '../components/BackgroundImage';
+import { Footer } from '../components/Footer';
 
 export const PricingPage = () => {
   const [plans, setPlans] = useState([]);
@@ -21,11 +21,10 @@ export const PricingPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen text-white relative">
-      <BackgroundImage />
+    <div className="min-h-screen relative" style={{ backgroundColor: '#111828' }}>
       <Navbar />
       <div className="relative z-10 px-8 py-12">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto px-12 py-16">
           <h1 className="text-4xl font-bold mb-8 text-white text-center">
             Pricing Plans
           </h1>
@@ -36,11 +35,27 @@ export const PricingPage = () => {
               {plans.map((plan) => (
                 <div
                   key={plan.id}
-                  className="bg-gray-800/50 backdrop-blur-md border border-white/10 p-6 rounded hover:bg-gray-800/70 transition-all"
+                  className="p-6 rounded-lg transition-all relative overflow-hidden group"
+                  style={{
+                    background: 'rgba(30, 41, 56, 0.6)',
+                    backdropFilter: 'blur(12px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(30, 41, 56, 0.75)';
+                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(30, 41, 56, 0.6)';
+                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                  }}
                 >
+                  <div className="relative z-10">
                   <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
                   <p className="text-gray-300 mb-4">{plan.description}</p>
-                  <div className="text-4xl font-bold text-teal-400 mb-4">
+                  <div className="text-4xl font-bold text-white mb-4">
                     ฿{plan.price}
                     <span className="text-lg text-gray-400">/{plan.billing_cycle}</span>
                   </div>
@@ -53,15 +68,32 @@ export const PricingPage = () => {
                       ))}
                     </ul>
                   )}
-                  <button className="w-full px-4 py-2 rounded bg-teal-500/20 backdrop-blur-md border border-teal-500/30 text-teal-400 font-semibold hover:bg-teal-500/30 transition-all">
+                  <button 
+                    className="w-full px-4 py-2 rounded-lg text-white font-semibold transition-all"
+                    style={{
+                      background: 'rgba(30, 41, 56, 0.7)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(30, 41, 56, 0.85)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(30, 41, 56, 0.7)';
+                    }}
+                  >
                     Get Started
                   </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
