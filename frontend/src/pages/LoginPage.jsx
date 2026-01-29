@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
+import { BackgroundEffects } from '../components/BackgroundEffects';
 
 
 export const LoginPage = () => {
@@ -25,6 +26,7 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen relative flex flex-col" style={{ backgroundColor: '#111828' }}>
+      <BackgroundEffects />
       <Navbar />
       <div className="relative z-10 flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div

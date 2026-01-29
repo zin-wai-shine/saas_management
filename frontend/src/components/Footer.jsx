@@ -1,106 +1,112 @@
 import { Link } from 'react-router-dom';
-import { Phone, MapPin, Mail, Instagram, Linkedin, Twitter, Facebook, ArrowRight } from 'lucide-react';
+import { Phone, MapPin, Mail, Instagram, Linkedin, Twitter, Facebook } from 'lucide-react';
+import { BackgroundEffects } from './BackgroundEffects';
+import mainLogo from '../assets/main_logo.png';
 
 export const Footer = () => {
   return (
-    <footer className="relative z-10 pt-20 pb-10 border-t border-gray-800/50" style={{ backgroundColor: '#111828' }}>
-      {/* CTA Section */}
-      <div className="max-w-4xl mx-auto text-center mb-20 px-4">
-        <div className="w-16 h-16 bg-[#1E2938] rounded-2xl mx-auto mb-6 flex items-center justify-center border border-white/5 shadow-lg shadow-black/20 transform rotate-3">
-          <span className="text-2xl">✨</span>
-        </div>
-        <h2 className="text-3xl sm:text-4xl font-light text-white mb-4">
-          Ready to Optimize Your SaaS?
-        </h2>
-        <p className="text-gray-400 mb-8 max-w-lg mx-auto leading-relaxed">
-          Join thousands of businesses managing their subscriptions efficiently with Haiso.
-        </p>
-        <Link to="/register" className="inline-flex items-center px-8 py-3 rounded-xl bg-[#00BBA7]/90 text-white hover:bg-[#00BBA7] transition-all shadow-lg shadow-[#00BBA7]/20 backdrop-blur-sm border border-[#00BBA7]/20 group">
-          Get Started Now <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Link>
-      </div>
+    <footer className="relative z-10 pt-20 pb-16 border-t border-gray-800/50 overflow-hidden" style={{ backgroundColor: '#111828' }}>
+      <BackgroundEffects />
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 border-t border-white/5 pt-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
-          {/* Contact */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium text-white">Contact</h3>
-            <ul className="space-y-4 text-sm">
-              <li className="flex items-start text-gray-400 hover:text-white transition-colors group">
-                <Phone className="w-5 h-5 mr-3 mt-0.5 text-gray-500 group-hover:text-white transition-colors" />
-                <span>+66 99-999-9999</span>
-              </li>
-              <li className="flex items-start text-gray-400 hover:text-white transition-colors group">
-                <MapPin className="w-5 h-5 mr-3 mt-0.5 text-gray-500 shrink-0 group-hover:text-white transition-colors" />
-                <span>123 Silom Road, Bang Rak, Bangkok 10500</span>
-              </li>
-              <li className="flex items-start text-gray-400 hover:text-white transition-colors group">
-                <Mail className="w-5 h-5 mr-3 mt-0.5 text-gray-500 group-hover:text-white transition-colors" />
+      <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
+
+          {/* Left Column: Logo & Contact */}
+          <div className="lg:col-span-4 space-y-8">
+            <div className="flex items-center gap-3">
+              <img src={mainLogo} alt="HAISO" className="h-10 w-auto" />
+              <div className="flex flex-col">
+                <span className="text-2xl font-black tracking-tighter text-white leading-none">HAISO</span>
+                <span className="text-[10px] font-bold text-[#00BBA7] tracking-[0.2em] leading-none mt-1">SaaS SOLUTIONS</span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-start text-gray-400 text-sm group">
+                <MapPin className="w-4 h-4 mr-3 mt-0.5 text-[#00BBA7] group-hover:text-white transition-colors shrink-0" />
+                <span className="leading-relaxed">123 Silom Road, Bang Rak, Bangkok 10500</span>
+              </div>
+              <div className="flex items-center text-gray-400 text-sm group">
+                <Mail className="w-4 h-4 mr-3 text-[#00BBA7] group-hover:text-white transition-colors shrink-0" />
                 <span>hello@haiso.com</span>
-              </li>
-            </ul>
+              </div>
+              <div className="flex items-center text-gray-400 text-sm group">
+                <Phone className="w-4 h-4 mr-3 text-[#00BBA7] group-hover:text-white transition-colors shrink-0" />
+                <span>+66 99-999-9999</span>
+              </div>
+            </div>
+
+            {/* Social Icons - Circular like the image */}
+            <div className="flex items-center gap-4 pt-4">
+              {[
+                { icon: Twitter, href: '#' },
+                { icon: Linkedin, href: '#' },
+                { icon: Instagram, href: '#' },
+                { icon: Facebook, href: '#' }
+              ].map((social, idx) => (
+                <a
+                  key={idx}
+                  href={social.href}
+                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:text-[#00BBA7] hover:border-[#00BBA7] transition-all hover:bg-[#00BBA7]/5"
+                >
+                  <social.icon className="w-4 h-4" />
+                </a>
+              ))}
+            </div>
           </div>
 
-          {/* Navigate */}
-          <div>
-            <h3 className="text-lg font-medium text-white mb-6">Navigate</h3>
-            <ul className="space-y-4 text-gray-400 text-sm">
-              <li><Link to="/" className="hover:text-white transition-colors hover:pl-1">Home</Link></li>
-              <li><Link to="/pricing" className="hover:text-white transition-colors hover:pl-1">Pricing</Link></li>
-              <li><Link to="/about" className="hover:text-white transition-colors hover:pl-1">About Us</Link></li>
-              <li><Link to="/services" className="hover:text-white transition-colors hover:pl-1">Services</Link></li>
-            </ul>
-          </div>
+          {/* Right Columns: categorized Links */}
+          <div className="lg:col-span-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
 
-          {/* Solution */}
-          <div>
-            <h3 className="text-lg font-medium text-white mb-6">Solution</h3>
-            <ul className="space-y-4 text-gray-400 text-sm">
-              <li><Link to="#" className="hover:text-white transition-colors hover:pl-1">Dashboard</Link></li>
-              <li><Link to="#" className="hover:text-white transition-colors hover:pl-1">Analytics</Link></li>
-              <li><Link to="#" className="hover:text-white transition-colors hover:pl-1">Automation</Link></li>
-              <li><Link to="#" className="hover:text-white transition-colors hover:pl-1">Security</Link></li>
-            </ul>
-          </div>
+              {/* Product */}
+              <div>
+                <h3 className="text-sm font-bold text-white mb-6 uppercase tracking-wider">Product</h3>
+                <ul className="space-y-4 text-gray-400 text-sm">
+                  <li><Link to="/gallery" className="hover:text-white transition-colors">Demos</Link></li>
+                  <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Features</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Analytics</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Security</Link></li>
+                </ul>
+              </div>
 
-          {/* Discover */}
-          <div>
-            <h3 className="text-lg font-medium text-white mb-6">Discover</h3>
-            <ul className="space-y-4 text-gray-400 text-sm">
-              <li><Link to="#" className="hover:text-white transition-colors hover:pl-1">Blog</Link></li>
-              <li><Link to="#" className="hover:text-white transition-colors hover:pl-1">Case Studies</Link></li>
-              <li><Link to="#" className="hover:text-white transition-colors hover:pl-1">Help Center</Link></li>
-              <li><Link to="#" className="hover:text-white transition-colors hover:pl-1">Privacy</Link></li>
-            </ul>
-          </div>
+              {/* Company */}
+              <div>
+                <h3 className="text-sm font-bold text-white mb-6 uppercase tracking-wider">Company</h3>
+                <ul className="space-y-4 text-gray-400 text-sm">
+                  <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Careers</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Blog</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Testimonials</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Press</Link></li>
+                </ul>
+              </div>
 
-          {/* Follow Us */}
-          <div>
-            <h3 className="text-lg font-medium text-white mb-6">Follow Us</h3>
-            <div className="space-y-4 text-sm">
-              <a href="#" className="flex items-center text-gray-400 hover:text-white transition-colors group">
-                <Facebook className="w-5 h-5 mr-3 text-gray-500 group-hover:text-white" /> Facebook
-              </a>
-              <a href="#" className="flex items-center text-gray-400 hover:text-white transition-colors group">
-                <Instagram className="w-5 h-5 mr-3 text-gray-500 group-hover:text-white" /> Instagram
-              </a>
-              <a href="#" className="flex items-center text-gray-400 hover:text-white transition-colors group">
-                <Linkedin className="w-5 h-5 mr-3 text-gray-500 group-hover:text-white" /> LinkedIn
-              </a>
-              <a href="#" className="flex items-center text-gray-400 hover:text-white transition-colors group">
-                <Twitter className="w-5 h-5 mr-3 text-gray-500 group-hover:text-white" /> Twitter
-              </a>
+              {/* Support */}
+              <div>
+                <h3 className="text-sm font-bold text-white mb-6 uppercase tracking-wider">Support</h3>
+                <ul className="space-y-4 text-gray-400 text-sm">
+                  <li><Link to="#" className="hover:text-white transition-colors">Contact Us</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Help Center</Link></li>
+                  <li><Link to="#" className="hover:text-white transition-colors">Status</Link></li>
+                </ul>
+              </div>
+
             </div>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-gray-500">
-            © {new Date().getFullYear()} HAISO. All rights reserved.
+        {/* Bottom Bar */}
+        <div className="mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+            © {new Date().getFullYear()} HAISO. All rights reserved. Built for local businesses.
           </p>
-          <div className="flex gap-8 text-xs text-gray-500">
-            <Link to="#" className="hover:text-white transition-colors">Privacy & Policy</Link>
-            <Link to="#" className="hover:text-white transition-colors">Terms & Condition</Link>
+          <div className="flex gap-8 text-[10px] text-gray-500 uppercase tracking-widest">
+            <Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="#" className="hover:text-white transition-colors">Terms of Condition</Link>
           </div>
         </div>
       </div>
