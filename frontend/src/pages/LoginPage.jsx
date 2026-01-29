@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
+
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -24,97 +24,135 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#111828' }}>
+    <div className="min-h-screen relative flex flex-col" style={{ backgroundColor: '#111828' }}>
       <Navbar />
-      <div className="relative z-10 flex items-center justify-center px-4 py-20">
-        <div 
-          className="p-8 rounded-xl max-w-md w-full"
+      <div className="relative z-10 flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div
+          className="p-8 sm:p-10 rounded-2xl w-full max-w-md"
           style={{
-            background: 'rgba(30, 41, 56, 0.6)',
-            backdropFilter: 'blur(12px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            // background removed
+            // backdropFilter removed
+            // boxShadow removed
           }}
         >
-          <h2 className="text-3xl font-bold mb-6 text-white text-center">Login</h2>
-          {error && <div className="bg-red-500/20 border border-red-500/50 text-red-300 p-3 rounded-lg mb-4">{error}</div>}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-light text-white mb-2">Welcome Back</h2>
+            <p className="text-gray-400 text-sm">Sign in to continue to your dashboard</p>
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-200 p-4 rounded-lg mb-6 text-sm flex items-center">
+              <span className="mr-2">⚠️</span> {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-gray-300 mb-2 font-medium">Email</label>
+              <label className="block text-gray-300 mb-2 text-sm font-medium ml-1">Email Address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#1E2938] transition-all"
+                className="w-full px-4 py-2.5 rounded text-white placeholder-gray-400 placeholder:text-sm focus:outline-none"
                 style={{
-                  backgroundColor: '#1E2938',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(30, 41, 56, 0.6)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                }}
+                onMouseEnter={(e) => {
+                  if (document.activeElement !== e.target) {
+                    e.target.style.background = 'rgba(30, 41, 56, 0.8)';
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (document.activeElement !== e.target) {
+                    e.target.style.background = 'rgba(30, 41, 56, 0.6)';
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                  }
                 }}
                 onFocus={(e) => {
-                  e.target.style.border = '1px solid rgba(30, 41, 56, 0.5)';
-                  e.target.style.backgroundColor = '#2A3441';
+                  e.target.style.background = 'rgba(30, 41, 56, 0.9)';
+                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.3)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-                  e.target.style.backgroundColor = '#1E2938';
+                  e.target.style.background = 'rgba(30, 41, 56, 0.6)';
+                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.08)';
                 }}
-                placeholder="your.email@example.com"
+                placeholder="name@example.com"
                 required
               />
             </div>
             <div>
-              <label className="block text-gray-300 mb-2 font-medium">Password</label>
+              <label className="block text-gray-300 mb-2 text-sm font-medium ml-1">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#1E2938] transition-all"
+                className="w-full px-4 py-2.5 rounded text-white placeholder-gray-400 placeholder:text-sm focus:outline-none"
                 style={{
-                  backgroundColor: '#1E2938',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(30, 41, 56, 0.6)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                }}
+                onMouseEnter={(e) => {
+                  if (document.activeElement !== e.target) {
+                    e.target.style.background = 'rgba(30, 41, 56, 0.8)';
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (document.activeElement !== e.target) {
+                    e.target.style.background = 'rgba(30, 41, 56, 0.6)';
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                  }
                 }}
                 onFocus={(e) => {
-                  e.target.style.border = '1px solid rgba(30, 41, 56, 0.5)';
-                  e.target.style.backgroundColor = '#2A3441';
+                  e.target.style.background = 'rgba(30, 41, 56, 0.9)';
+                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.3)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-                  e.target.style.backgroundColor = '#1E2938';
+                  e.target.style.background = 'rgba(30, 41, 56, 0.6)';
+                  e.target.style.border = '1px solid rgba(255, 255, 255, 0.08)';
                 }}
                 placeholder="Enter your password"
                 required
               />
             </div>
+
             <button
               type="submit"
-              className="w-full px-4 py-2 rounded-lg text-white font-semibold transition-all"
+              className="w-full px-6 py-2.5 rounded text-white font-medium tracking-wide mt-4"
               style={{
                 background: 'rgba(30, 41, 56, 0.7)',
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.85)';
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.9)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'rgba(30, 41, 56, 0.7)';
               }}
             >
-              Login
+              Sign In
             </button>
           </form>
-          <p className="mt-4 text-center text-gray-300">
+
+          <p className="mt-8 text-center text-gray-400 text-sm">
             Don't have an account?{' '}
-            <Link to="/register" className="text-[#1E2938] hover:text-[#2A3441] transition-colors">
-              Register
+            <Link
+              to="/register"
+              className="text-white hover:text-gray-200 font-medium transition-colors border-b border-transparent hover:border-gray-200"
+            >
+              Register now
             </Link>
           </p>
         </div>
       </div>
-      <Footer />
+
     </div>
   );
 };

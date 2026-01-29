@@ -1,21 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaSearch } from 'react-icons/fa';
-import { 
-  BarChart3, 
-  Shield, 
-  Cloud, 
-  Zap, 
-  CreditCard, 
-  FileText, 
-  Brain, 
-  Plug, 
-  Bell, 
-  Users 
+import {
+  BarChart3,
+  Shield,
+  Cloud,
+  Zap,
+  CreditCard,
+  FileText,
+  Brain,
+  Plug,
+  Bell,
+  Users
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { businessAPI } from '../api/api';
+import mainLogo from '../assets/main_logo.png';
 
 export const LandingPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,23 +92,25 @@ export const LandingPage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <header className="relative px-8 pt-32 pb-20 md:pt-40 md:pb-32 flex flex-col items-center text-center overflow-hidden z-10" style={{ backgroundColor: '#111828' }}>
-        
+      <header className="relative px-8 pt-32 pb-6 md:pt-40 md:pb-8 flex flex-col items-center text-center overflow-hidden z-10" style={{ backgroundColor: '#111828' }}>
         <div className="relative z-10 max-w-[95%] mx-auto w-full p-12 md:p-16">
-          <h1 
-            className="text-4xl md:text-6xl lg:text-3xl leading-tight mb-32 text-gray-300"
-            style={{ 
-              fontFamily: "'Barlow', sans-serif",
-              fontWeight: 300,
-              opacity: 0.8,
-              letterSpacing: '0.1em',
-            }}
+          <h1
+            className="relative flex flex-col items-center mb-10"
           >
-            Launch Your Business ...
+            {/* Logo Glow */}
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-50 blur-[100px] z-0 pointer-events-none"
+              style={{ background: 'radial-gradient(circle, #00BBA7 0%, transparent 70%)' }}
+            />
+            <img
+              src={mainLogo}
+              alt="HAISO Logo"
+              className="relative z-10 h-32 md:h-48 lg:h-64 h-auto object-contain transition-transform duration-500 hover:scale-105"
+            />
           </h1>
 
           {/* Premium Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="relative max-w-2xl mx-auto mb-20">
+          <form onSubmit={handleSearchSubmit} className="relative max-w-2xl mx-auto mb-10">
             <div className="relative">
               <input
                 ref={mainSearchInputRef}
@@ -150,13 +153,13 @@ export const LandingPage = () => {
                   e.target.style.background = 'rgba(30, 41, 56, 0.7)';
                 }}
               >
-                <FaSearch className="text-xl" />
+                <FaSearch className="text-xl" style={{ color: '#00BBA7' }} />
               </button>
             </div>
 
             {/* Search Results Dropdown */}
             {showResults && businesses.length > 0 && (
-              <div 
+              <div
                 className="absolute top-full left-0 right-0 mt-2 max-h-96 overflow-y-auto rounded-xl z-50"
                 style={{
                   background: 'rgba(30, 41, 56, 0.85)',
@@ -192,14 +195,21 @@ export const LandingPage = () => {
             )}
           </form>
 
+          <p
+            className="text-base md:text-lg lg:text-xl text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed font-light"
+          >
+            The all-in-one platform for local businesses to claim professionally designed
+            websites, manage their online presence, and scale effortlessly.
+          </p>
+
           {/* SaaS Services Section */}
-          <div className="relative w-full mt-8 mb-6">
+          <div className="relative w-full mt-4 mb-6">
             {/* Scrolling Container */}
-            <div 
+            <div
               className="relative overflow-hidden py-4"
             >
               {/* Left Gradient Fade */}
-              <div 
+              <div
                 className="absolute left-0 top-0 bottom-0 w-32 z-10 pointer-events-none"
                 style={{
                   background: 'linear-gradient(to right, rgba(17, 24, 40, 1), rgba(17, 24, 40, 0))',
@@ -207,7 +217,7 @@ export const LandingPage = () => {
               />
 
               {/* Right Gradient Fade */}
-              <div 
+              <div
                 className="absolute right-0 top-0 bottom-0 w-32 z-10 pointer-events-none"
                 style={{
                   background: 'linear-gradient(to left, rgba(17, 24, 40, 1), rgba(17, 24, 40, 0))',
@@ -215,7 +225,7 @@ export const LandingPage = () => {
               />
 
               {/* Scrolling Content */}
-              <div 
+              <div
                 className="flex gap-8"
                 style={{
                   animation: 'scroll 40s linear infinite',
@@ -306,15 +316,8 @@ export const LandingPage = () => {
             `}</style>
           </div>
 
-          <p 
-            className="text-base md:text-lg lg:text-xl text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed font-light mt-27"
-            style={{ fontFamily: "'Barlow', sans-serif" }}
-          >
-            The all-in-one platform for local businesses to claim professionally designed
-            websites, manage their online presence, and scale effortlessly.
-          </p>
         </div>
-        
+
         {/* Cyberpunk Animations */}
         <style>{`
           @keyframes cyberOrb1 {
@@ -371,6 +374,137 @@ export const LandingPage = () => {
           }
         `}</style>
       </header>
+
+      {/* Services Section */}
+      <section className="relative w-full pt-8 pb-20 px-8" style={{ backgroundColor: '#111828' }}>
+        <div className="max-w-7xl mx-auto">
+          {/* Section Header */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
+              Our Core Services
+            </h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Essential tools designed to help your business run smarter and scale faster.
+            </p>
+          </div>
+
+          {/* Service Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Analytics Card */}
+            <div
+              className="p-6 rounded-xl transition-all"
+              style={{
+                background: 'rgba(30, 41, 56, 0.6)',
+                backdropFilter: 'blur(12px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.75)';
+                e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.6)';
+                e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+              }}
+            >
+              <div className="mb-4">
+                <BarChart3 className="w-10 h-10 text-white" style={{ opacity: 0.9 }} />
+              </div>
+              <h3 className="text-xl font-medium text-white mb-2">Analytics</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Real-time insights to track performance and make better decisions.
+              </p>
+            </div>
+
+            {/* Automation Card */}
+            <div
+              className="p-6 rounded-xl transition-all"
+              style={{
+                background: 'rgba(30, 41, 56, 0.6)',
+                backdropFilter: 'blur(12px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.75)';
+                e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.6)';
+                e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+              }}
+            >
+              <div className="mb-4">
+                <Zap className="w-10 h-10 text-white" style={{ opacity: 0.9 }} />
+              </div>
+              <h3 className="text-xl font-medium text-white mb-2">Automation</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Automate workflows to save time and reduce manual work.
+              </p>
+            </div>
+
+            {/* Security Card */}
+            <div
+              className="p-6 rounded-xl transition-all"
+              style={{
+                background: 'rgba(30, 41, 56, 0.6)',
+                backdropFilter: 'blur(12px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.75)';
+                e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.6)';
+                e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+              }}
+            >
+              <div className="mb-4">
+                <Shield className="w-10 h-10 text-white" style={{ opacity: 0.9 }} />
+              </div>
+              <h3 className="text-xl font-medium text-white mb-2">Security</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Enterprise-level protection to keep your data safe and secure.
+              </p>
+            </div>
+
+            {/* Integrations Card */}
+            <div
+              className="p-6 rounded-xl transition-all"
+              style={{
+                background: 'rgba(30, 41, 56, 0.6)',
+                backdropFilter: 'blur(12px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.75)';
+                e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(30, 41, 56, 0.6)';
+                e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+              }}
+            >
+              <div className="mb-4">
+                <Plug className="w-10 h-10 text-white" style={{ opacity: 0.9 }} />
+              </div>
+              <h3 className="text-xl font-medium text-white mb-2">Integrations</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Connect seamlessly with your favorite tools and platforms.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );

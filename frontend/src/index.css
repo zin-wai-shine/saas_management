@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@700&display=swap');
 
 @theme {
   --color-teal-glass: #14b8a6;
@@ -29,6 +30,42 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes cyberOrb1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes cyberOrb2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(-50px, 30px) scale(0.95);
+  }
+
+  66% {
+    transform: translate(40px, -40px) scale(1.05);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 code {
